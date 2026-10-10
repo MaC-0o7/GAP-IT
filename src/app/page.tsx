@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   IconActivity,
   IconBell,
@@ -93,13 +93,83 @@ const sections = [
   },
 ] as const;
 
+type SectionId = (typeof sections)[number]["id"];
+
+function isSectionId(value: string | undefined): value is SectionId {
+  return sections.some((section) => section.id === value);
+}
+
 export default function Home() {
-  const [activeSection, setActiveSection] = useState<(typeof sections)[number]["id"]>(
-    "overview",
-  );
+  const [activeSection, setActiveSection] = useState<SectionId>("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
   const currentSection =
     sections.find((section) => section.id === activeSection) ?? sections[0];
+
+  useEffect(() => {
+    const initialHash = window.location.hash.slice(1);
+    const initialSection = isSectionId(initialHash) ? initialHash : "overview";
+    const appUrl = `${window.location.pathname}${window.location.search}`;
+
+    window.history.replaceState(
+      { gapIt: true, section: "overview" },
+      "",
+      appUrl,
+    );
+    window.history.pushState(
+      { gapIt: true, rootGuard: true, section: "overview" },
+      "",
+      appUrl,
+    );
+
+    setActiveSection("overview");
+    if (initialSection !== "overview") {
+      window.history.pushState(
+        { gapIt: true, section: initialSection },
+        "",
+        appUrl,
+      );
+      setActiveSection(initialSection);
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state as
+        | { gapIt?: boolean; rootGuard?: boolean; section?: string }
+        | null;
+
+      if (state?.gapIt && isSectionId(state.section)) {
+        setActiveSection(state.section);
+        if (state.section === "overview" && !state.rootGuard) {
+          window.history.pushState(
+            { gapIt: true, rootGuard: true, section: "overview" },
+            "",
+            appUrl,
+          );
+        }
+        return;
+      }
+
+      setActiveSection("overview");
+      window.history.pushState(
+        { gapIt: true, rootGuard: true, section: "overview" },
+        "",
+        appUrl,
+      );
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const navigateToSection = (sectionId: SectionId) => {
+    if (sectionId === activeSection) return;
+
+    window.history.pushState(
+      { gapIt: true, section: sectionId },
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+    setActiveSection(sectionId);
+  };
 
   const navigation = (
     <nav aria-label="Quality workspace sections" className="flex flex-col gap-1">
@@ -111,8 +181,9 @@ export default function Home() {
             href: `#${section.id}`,
             icon: section.icon,
             active: activeSection === section.id,
-            onClick: () => {
-              setActiveSection(section.id);
+            onClick: (event) => {
+              event.preventDefault();
+              navigateToSection(section.id);
               setMobileOpen(false);
             },
           }}
@@ -122,14 +193,17 @@ export default function Home() {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#f6f8fc]">
+    <div className="flex min-h-dvh bg-[#f6f8fc]">
       <Sidebar open={mobileOpen} setOpen={setMobileOpen}>
         <SidebarBody className="gap-6" showMobile={false}>
           <a
             aria-label="GAP-IT home"
             className="flex h-10 shrink-0 items-center gap-3 px-2.5"
             href="#overview"
-            onClick={() => setActiveSection("overview")}
+            onClick={(event) => {
+              event.preventDefault();
+              navigateToSection("overview");
+            }}
           >
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-700 text-xs font-bold tracking-tight text-white">
               G
@@ -223,7 +297,7 @@ export default function Home() {
               <button
                 aria-label="Back to dashboard"
                 className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-slate-700 transition active:bg-slate-100"
-                onClick={() => setActiveSection("overview")}
+                onClick={() => window.history.back()}
                 type="button"
               >
                 <IconChevronLeft aria-hidden="true" className="size-5" />
@@ -264,7 +338,7 @@ export default function Home() {
                   <button
                     key={section.id}
                     className="flex min-h-36 flex-col items-start rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] active:bg-blue-50"
-                    onClick={() => setActiveSection(section.id)}
+                    onClick={() => navigateToSection(section.id)}
                     type="button"
                   >
                     <span className="mb-3 grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700">

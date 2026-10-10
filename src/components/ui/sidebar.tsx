@@ -24,7 +24,7 @@ type SidebarLinkData = {
   href: string;
   icon: ReactNode;
   active?: boolean;
-  onClick?: () => void;
+  onClick?: ComponentProps<"a">["onClick"];
 };
 
 const SidebarContext = createContext<SidebarContextValue | undefined>(undefined);
