@@ -109,7 +109,7 @@ function DesktopSidebar({
     <motion.aside
       aria-label="Main navigation"
       className={cn(
-        "hidden h-screen shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-3 py-5 md:flex",
+        "hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-3 py-5 dark:border-slate-800 dark:bg-slate-950 md:flex",
         className,
       )}
       animate={{ width: animate ? (open ? 272 : 76) : 272 }}
@@ -187,8 +187,8 @@ export function SidebarLink({
       className={cn(
         "group/sidebar flex min-h-10 items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
         link.active
-          ? "bg-blue-50 font-semibold text-blue-700"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+          ? "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white",
         className,
       )}
       href={link.href}

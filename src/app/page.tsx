@@ -12,12 +12,15 @@ import {
   IconFileReport,
   IconHistory,
   IconLayoutDashboard,
+  IconMoon,
   IconRoute,
   IconSettings,
   IconSettingsAutomation,
+  IconSun,
   IconUsers,
 } from "@tabler/icons-react";
-import { cn } from "@/lib/utils";
+import { createDemoData, type DemoData } from "@/lib/demo-data";
+import { WorkspaceModule } from "@/components/workspace-module";
 import {
   Sidebar,
   SidebarBody,
@@ -102,8 +105,48 @@ function isSectionId(value: string | undefined): value is SectionId {
 export default function Home() {
   const [activeSection, setActiveSection] = useState<SectionId>("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [data, setData] = useState<DemoData>(createDemoData);
+  const [isHydrated, setIsHydrated] = useState(false);
   const currentSection =
     sections.find((section) => section.id === activeSection) ?? sections[0];
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("gap-it-demo-data");
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (
+          parsed !== null &&
+          typeof parsed === "object" &&
+          "measurements" in parsed &&
+          "parts" in parsed &&
+          "instruments" in parsed &&
+          "gateways" in parsed &&
+          "settings" in parsed
+        ) {
+          setData(parsed as DemoData);
+        }
+      }
+    } catch (error) {
+      console.error("Unable to load saved GAP-IT demo data.", error);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      window.localStorage.setItem("gap-it-demo-data", JSON.stringify(data));
+    } catch (error) {
+      console.error("Unable to save GAP-IT demo data.", error);
+    }
+  }, [data, isHydrated]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", data.settings.theme === "dark");
+    document.documentElement.style.colorScheme = data.settings.theme;
+  }, [data.settings.theme]);
 
   useEffect(() => {
     const initialHash = window.location.hash.slice(1);
@@ -239,60 +282,56 @@ export default function Home() {
       </Sidebar>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 hidden h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur md:flex md:px-8">
+        <header className="sticky top-0 z-20 hidden h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 md:flex md:px-8">
           <div className="hidden items-center gap-2 text-xs text-slate-500 md:flex">
             <IconDatabase aria-hidden="true" className="size-4" />
             <span>Quality Operations</span>
             <span aria-hidden="true">/</span>
-            <span className="font-medium text-slate-800">
+            <span className="font-medium text-slate-800 dark:text-slate-200">
               {currentSection.label}
             </span>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600">
-            GAP-IT
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              DEMO · NO HARDWARE
+            </span>
+            <button
+              aria-label={`Switch to ${data.settings.theme === "light" ? "dark" : "light"} theme`}
+              className="grid size-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              onClick={() =>
+                setData((current) => ({
+                  ...current,
+                  settings: {
+                    ...current.settings,
+                    theme: current.settings.theme === "light" ? "dark" : "light",
+                  },
+                }))
+              }
+              type="button"
+            >
+              {data.settings.theme === "light" ? (
+                <IconMoon aria-hidden="true" className="size-4" />
+              ) : (
+                <IconSun aria-hidden="true" className="size-4" />
+              )}
+            </button>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              GAP-IT
+            </span>
+          </div>
         </header>
 
-        <main className="hidden w-full flex-1 px-5 py-8 md:block md:px-8 md:py-10">
-          <div className="mx-auto max-w-6xl">
-            <div className="mb-8">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
-                Quality workspace
-              </p>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
-                {currentSection.label}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                {currentSection.description}
-              </p>
-            </div>
-
-            <section
-              aria-labelledby="section-placeholder-title"
-              className={cn(
-                "flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm",
-              )}
-            >
-              <span className="mb-4 grid size-12 place-items-center rounded-xl bg-blue-50 text-blue-700">
-                {currentSection.icon}
-              </span>
-              <h2
-                className="text-base font-semibold text-slate-900"
-                id="section-placeholder-title"
-              >
-                Section ready for your requirements
-              </h2>
-              <p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">
-                The {currentSection.label.toLowerCase()} page is set up in the
-                navigation. Share what you want this section to do, and its
-                components can be added here.
-              </p>
-            </section>
-          </div>
+        <main className="hidden w-full flex-1 overflow-y-auto bg-slate-50 px-4 py-6 dark:bg-slate-950 md:block md:px-8 md:py-8">
+          <WorkspaceModule
+            activeSection={activeSection}
+            data={data}
+            onNavigate={navigateToSection}
+            setData={setData}
+          />
         </main>
 
-        <section className="flex h-dvh min-h-0 flex-1 flex-col bg-slate-50 md:hidden">
-          <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 pt-[env(safe-area-inset-top)]">
+        <section className="flex h-dvh min-h-0 flex-1 flex-col bg-slate-50 dark:bg-slate-950 md:hidden">
+          <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 pt-[env(safe-area-inset-top)] dark:border-slate-800 dark:bg-slate-950">
             {activeSection !== "overview" ? (
               <button
                 aria-label="Back to dashboard"
@@ -315,84 +354,36 @@ export default function Home() {
                 Quality operations
               </p>
             </div>
+            <button
+              aria-label={`Switch to ${data.settings.theme === "light" ? "dark" : "light"} theme`}
+              className="grid size-10 shrink-0 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              onClick={() =>
+                setData((current) => ({
+                  ...current,
+                  settings: {
+                    ...current.settings,
+                    theme: current.settings.theme === "light" ? "dark" : "light",
+                  },
+                }))
+              }
+              type="button"
+            >
+              {data.settings.theme === "light" ? (
+                <IconMoon aria-hidden="true" className="size-4" />
+              ) : (
+                <IconSun aria-hidden="true" className="size-4" />
+              )}
+            </button>
           </header>
 
-          {activeSection === "overview" ? (
-            <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-6">
-              <div className="mb-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
-                  Quality workspace
-                </p>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-                  Dashboard
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                  Choose a workspace to get started.
-                </p>
-              </div>
-              <nav
-                aria-label="Dashboard sections"
-                className="grid grid-cols-2 gap-3"
-              >
-                {sections.slice(1).map((section) => (
-                  <button
-                    key={section.id}
-                    className="flex min-h-36 flex-col items-start rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.98] active:bg-blue-50"
-                    onClick={() => navigateToSection(section.id)}
-                    type="button"
-                  >
-                    <span className="mb-3 grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700">
-                      {section.icon}
-                    </span>
-                    <span className="flex w-full items-center justify-between gap-2">
-                      <span className="text-sm font-semibold leading-5 text-slate-900">
-                        {section.label}
-                      </span>
-                      <IconChevronRight
-                        aria-hidden="true"
-                        className="size-4 shrink-0 text-slate-400"
-                      />
-                    </span>
-                    <span className="mt-1 line-clamp-2 text-xs leading-4 text-slate-500">
-                      {section.description}
-                    </span>
-                  </button>
-                ))}
-              </nav>
-            </main>
-          ) : (
-            <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-              <div className="border-b border-slate-200 bg-white px-5 py-6">
-                <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-blue-50 text-blue-700">
-                  {currentSection.icon}
-                </span>
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-                  {currentSection.label}
-                </h1>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  {currentSection.description}
-                </p>
-              </div>
-              <section
-                aria-labelledby="mobile-section-placeholder-title"
-                className="flex min-h-72 flex-1 flex-col items-center justify-center px-6 py-10 text-center"
-              >
-                <span className="mb-4 grid size-14 place-items-center rounded-2xl bg-white text-blue-700 shadow-sm ring-1 ring-slate-200">
-                  {currentSection.icon}
-                </span>
-                <h2
-                  className="text-base font-semibold text-slate-900"
-                  id="mobile-section-placeholder-title"
-                >
-                  Section ready for your requirements
-                </h2>
-                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                  The {currentSection.label.toLowerCase()} page is set up in
-                  the navigation. Its components can be added here.
-                </p>
-              </section>
-            </main>
-          )}
+          <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5">
+            <WorkspaceModule
+              activeSection={activeSection}
+              data={data}
+              onNavigate={navigateToSection}
+              setData={setData}
+            />
+          </main>
         </section>
       </div>
     </div>
