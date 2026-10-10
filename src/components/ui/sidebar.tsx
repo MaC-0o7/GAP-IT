@@ -82,16 +82,18 @@ export function Sidebar({
 export function SidebarBody({
   children,
   className,
+  showMobile = true,
   ...props
 }: Omit<ComponentProps<typeof motion.div>, "children"> & {
   children: ReactNode;
+  showMobile?: boolean;
 }) {
   return (
     <>
       <DesktopSidebar className={className} {...props}>
         {children}
       </DesktopSidebar>
-      <MobileSidebar>{children}</MobileSidebar>
+      {showMobile && <MobileSidebar>{children}</MobileSidebar>}
     </>
   );
 }
