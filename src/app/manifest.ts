@@ -1,0 +1,28 @@
+import type { MetadataRoute } from "next";
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    id: "/",
+    name: "GAP-IT Quality Operations",
+    short_name: "GAP-IT",
+    description: "Quality operations workspace for measurement and process control.",
+    start_url: "/",
+    display: "standalone",
+    background_color: "#f6f8fc",
+    theme_color: "#1d4ed8",
+    icons: [
+      {
+        src: "/icons/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+    ],
+  };
+}
