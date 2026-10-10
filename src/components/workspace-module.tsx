@@ -793,7 +793,7 @@ export function WorkspaceModule({
                           Saves to this local demo event; no external message is sent.
                         </span>
                         <StatefulButton
-                          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-blue-700 px-3 text-xs font-semibold text-white hover:bg-blue-800"
+                          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-blue-700 px-3 text-xs font-semibold text-white hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500"
                           onClick={async () => {
                             const note = (eventNoteDrafts[item.id] ?? item.notes).trim();
                             await new Promise<void>((resolve) =>
