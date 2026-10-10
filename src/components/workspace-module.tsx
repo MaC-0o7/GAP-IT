@@ -24,6 +24,7 @@ import {
   type DemoData,
   type Measurement,
 } from "@/lib/demo-data";
+import { StatefulButton } from "@/components/ui/stateful-button";
 
 type ModuleId =
   | "overview"
@@ -196,6 +197,7 @@ export function WorkspaceModule({
   const [traceQuery, setTraceQuery] = useState("");
   const [traceSearched, setTraceSearched] = useState(false);
   const [notice, setNotice] = useState("");
+  const [eventNoteDrafts, setEventNoteDrafts] = useState<Record<string, string>>({});
   const [partDraft, setPartDraft] = useState({
     number: "",
     name: "",
@@ -771,9 +773,49 @@ export function WorkspaceModule({
                         {data.users.filter((user) => user.active).map((user) => <option key={user.id}>{user.name}</option>)}
                       </select>
                     </label>
-                    <label className="text-xs font-medium text-slate-500">Investigation notes
-                      <textarea aria-label={`Notes for ${item.id}`} className={`${inputClass} mt-1 min-h-10 py-2`} onChange={(event) => setData((current) => ({ ...current, events: current.events.map((record) => record.id === item.id ? { ...record, notes: event.target.value } : record) }))} placeholder="Add a note to the event history…" value={item.notes} />
-                    </label>
+                    <div className="text-xs font-medium text-slate-500">
+                      <label htmlFor={`notes-${item.id}`}>Investigation notes</label>
+                      <textarea
+                        id={`notes-${item.id}`}
+                        aria-label={`Notes for ${item.id}`}
+                        className={`${inputClass} mt-1 min-h-10 py-2`}
+                        onChange={(event) =>
+                          setEventNoteDrafts((drafts) => ({
+                            ...drafts,
+                            [item.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Add a note to the event history…"
+                        value={eventNoteDrafts[item.id] ?? item.notes}
+                      />
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[11px] font-normal">
+                          Saves to this local demo event; no external message is sent.
+                        </span>
+                        <StatefulButton
+                          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-blue-700 px-3 text-xs font-semibold text-white hover:bg-blue-800"
+                          onClick={async () => {
+                            const note = (eventNoteDrafts[item.id] ?? item.notes).trim();
+                            await new Promise<void>((resolve) =>
+                              window.setTimeout(resolve, 400),
+                            );
+                            setData((current) => ({
+                              ...current,
+                              events: current.events.map((record) =>
+                                record.id === item.id ? { ...record, notes: note } : record,
+                              ),
+                            }));
+                            setEventNoteDrafts((drafts) => ({
+                              ...drafts,
+                              [item.id]: note,
+                            }));
+                          }}
+                          successLabel="Saved locally"
+                        >
+                          Send note
+                        </StatefulButton>
+                      </div>
+                    </div>
                   </div>
                 </article>
               ))}
