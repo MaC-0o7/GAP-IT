@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080d15" />
+  <meta name="description" content="GAP-IT quality operations workspace." />
+  <title>GAP-IT | Quality Operations</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="workspace.css?v=2" />
+</head>
+<body class="workspace-page">
+  <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-overview" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="icon-live" viewBox="0 0 24 24"><path d="M2 12h4l3-8 5 16 3-8h5"/></symbol>
+    <symbol id="icon-instrument" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M8 20h8m-4-4v4m-4-9 2-3 2 4 2-3 2 2"/></symbol>
+    <symbol id="icon-analytics" viewBox="0 0 24 24"><path d="M4 19V5m0 14h17M7 15l4-4 3 2 6-7"/></symbol>
+    <symbol id="icon-reports" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5m-9 4h5m-5 4h5m-5 4h3"/></symbol>
+    <symbol id="icon-setup" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="9" cy="5" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="19" r="2"/></symbol>
+    <symbol id="icon-alerts" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 13h4"/></symbol>
+    <symbol id="icon-trace" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h5a4 4 0 0 1 4 4v6m-6 2H8a4 4 0 0 1-4-4v-2"/></symbol>
+    <symbol id="icon-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5m4-1v5l3 2"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2zm13-9a3 3 0 1 0 0-6m2 9a5 5 0 0 1 3 5"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.6-1.4-2.4 1.4-1.1a8 8 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.6 1.4 2.4-1.4 1.1a8 8 0 0 1-.1 2Z"/></symbol>
+  </svg>
+
+  <div class="workspace-shell">
+    <aside class="workspace-sidebar" id="workspaceSidebar">
+      <a class="workspace-brand" href="#part-inspection-setup" aria-label="GAP-IT workspace home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-name">GAP<span>-IT</span><small>QUALITY OPERATIONS</small></span>
+      </a>
+
+      <div class="sidebar-caption">WORKSPACE</div>
+      <nav class="workspace-nav" aria-label="Quality workspace sections">
+        <a class="workspace-link" href="#overview-dashboard" data-section="overview-dashboard"><svg><use href="#icon-overview"/></svg><span>Overview Dashboard</span></a>
+        <a class="workspace-link" href="#live-measurements" data-section="live-measurements"><svg><use href="#icon-live"/></svg><span>Live Measurements</span><i class="nav-live-dot" aria-label="Live"></i></a>
+        <a class="workspace-link" href="#instrument-gateway-management" data-section="instrument-gateway-management"><svg><use href="#icon-instrument"/></svg><span>Instrument &amp; Gateway Management</span></a>
+        <a class="workspace-link" href="#spc-analytics" data-section="spc-analytics"><svg><use href="#icon-analytics"/></svg><span>SPC Analytics</span></a>
+        <a class="workspace-link" href="#spc-reports" data-section="spc-reports"><svg><use href="#icon-reports"/></svg><span>SPC Reports</span></a>
+        <a class="workspace-link" href="#part-inspection-setup" data-section="part-inspection-setup"><svg><use href="#icon-setup"/></svg><span>Part &amp; Inspection Setup</span></a>
+        <a class="workspace-link" href="#alerts-quality-events" data-section="alerts-quality-events"><svg><use href="#icon-alerts"/></svg><span>Alerts &amp; Quality Events</span><span class="nav-count">2</span></a>
+        <a class="workspace-link" href="#traceability" data-section="traceability"><svg><use href="#icon-trace"/></svg><span>Traceability</span></a>
+        <a class="workspace-link" href="#history-data-explorer" data-section="history-data-explorer"><svg><use href="#icon-history"/></svg><span>History &amp; Data Explorer</span></a>
+        <a class="workspace-link" href="#users-permissions" data-section="users-permissions"><svg><use href="#icon-users"/></svg><span>Users &amp; Permissions</span></a>
+        <a class="workspace-link" href="#system-settings" data-section="system-settings"><svg><use href="#icon-settings"/></svg><span>System Settings</span></a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="connection-status"><span class="connection-dot"></span><span><strong>System connected</strong><small>All services operational</small></span></div>
+        <div class="workspace-user"><span class="user-avatar">QT</span><span><strong>Quality Team</strong><small>Workspace member</small></span><span class="user-menu" aria-hidden="true">•••</span></div>
+      </div>
+    </aside>
+
+    <div class="workspace-main">
+      <header class="workspace-topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="workspaceSidebar"><span></span><span></span><span></span></button>
+        <div class="workspace-breadcrumb"><span>Quality Operations</span><span aria-hidden="true">/</span><strong id="breadcrumbTitle">Part &amp; Inspection Setup</strong></div>
+        <div class="topbar-actions">
+          <span class="topbar-status"><i></i> All systems normal</span>
+          <button class="notification-button" type="button" aria-label="Notifications, 2 unread"><svg><use href="#icon-alerts"/></svg><i></i></button>
+          <span class="topbar-avatar" aria-label="Quality Team">QT</span>
+        </div>
+      </header>
+
+      <main class="workspace-content">
+        <div class="page-heading">
+          <div>
+            <div class="page-eyebrow"><span class="page-eyebrow-line"></span>QUALITY WORKSPACE <span id="sectionNumber">06</span></div>
+            <h1 id="sectionTitle">Part &amp; Inspection Setup</h1>
+            <p id="sectionDescription">Configure parts, characteristics, and inspection plans.</p>
+          </div>
+          <div class="page-date"><span class="date-dot"></span> WORKSPACE READY</div>
+        </div>
+
+        <section class="requirements-placeholder" aria-labelledby="placeholderTitle">
+          <div class="placeholder-graphic" aria-hidden="true">
+            <div class="graphic-orbit orbit-a"></div><div class="graphic-orbit orbit-b"></div>
+            <div class="graphic-core"><svg><use href="#icon-setup"/></svg></div>
+            <span class="graphic-node node-top"></span><span class="graphic-node node-right"></span><span class="graphic-node node-bottom"></span><span class="graphic-node node-left"></span>
+          </div>
+          <div class="placeholder-kicker"><span></span>SECTION 06 / 11</div>
+          <h2 id="placeholderTitle">Part &amp; Inspection Setup</h2>
+          <p>This section is ready for your requirements. Tell me which parts, characteristics, inspection plans, fields, and actions you want here, and I’ll build the components into this page.</p>
+          <div class="placeholder-footer"><span><svg><use href="#icon-setup"/></svg> COMPONENTS TO BE DEFINED</span><span>GAP-IT WORKSPACE</span></div>
+        </section>
+
+        <footer class="workspace-footer"><span>GAP-IT <i>•</i> QUALITY OPERATIONS</span><span>Connected workspace <i class="footer-status"></i></span></footer>
+      </main>
+    </div>
+    <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="Close navigation"></button>
+  </div>
+  <script src="script.js?v=2"></script>
+</body>
+</html>

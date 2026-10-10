@@ -1,0 +1,54 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary "Main navigation" [ref=e3]:
+      - link "GAP-IT home" [ref=e4] [cursor=pointer]:
+        - /url: "#overview"
+        - generic [ref=e5]: G
+        - generic [ref=e6]: GAP-IT
+      - generic [ref=e7]:
+        - paragraph [ref=e8]: Workspace
+        - navigation "Quality workspace sections" [ref=e9]:
+          - link "Overview Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: "#overview"
+          - link "Live Measurements" [ref=e18] [cursor=pointer]:
+            - /url: "#live-measurements"
+          - link "Instrument & Gateway Management" [ref=e23] [cursor=pointer]:
+            - /url: "#instrument-management"
+          - link "SPC Analytics" [active] [ref=e29] [cursor=pointer]:
+            - /url: "#spc-analytics"
+          - link "SPC Reports" [ref=e36] [cursor=pointer]:
+            - /url: "#spc-reports"
+          - link "Part & Inspection Setup" [ref=e44] [cursor=pointer]:
+            - /url: "#part-inspection-setup"
+          - link "Alerts & Quality Events" [ref=e50] [cursor=pointer]:
+            - /url: "#alerts-quality-events"
+          - link "Traceability" [ref=e56] [cursor=pointer]:
+            - /url: "#traceability"
+          - link "History & Data Explorer" [ref=e63] [cursor=pointer]:
+            - /url: "#history-data-explorer"
+          - link "Users & Permissions" [ref=e69] [cursor=pointer]:
+            - /url: "#users-permissions"
+          - link "System Settings" [ref=e77] [cursor=pointer]:
+            - /url: "#system-settings"
+      - generic [ref=e84]:
+        - generic [ref=e85]: QT
+        - generic:
+          - paragraph: Quality Team
+          - paragraph: Workspace member
+    - generic [ref=e89]:
+      - banner [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e96]: Quality Operations
+          - generic [aria-hidden] [ref=e97]: /
+          - generic [ref=e98]: SPC Analytics
+        - generic [ref=e99]: GAP-IT
+      - main [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]:
+            - paragraph [ref=e103]: Quality workspace
+            - heading "SPC Analytics" [level=1] [ref=e116]
+            - paragraph [ref=e105]: Explore statistical process control charts and analysis.
+          - region [ref=e106]:
+            - heading "Section ready for your requirements" [level=2] [ref=e113]
+            - paragraph [ref=e114]: The spc analytics page is set up in the navigation. Share what you want this section to do, and its components can be added here.
+  - alert [ref=e115]
