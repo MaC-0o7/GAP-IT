@@ -25,6 +25,7 @@ import {
   Sidebar,
   SidebarBody,
   SidebarLink,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const sections = [
@@ -42,7 +43,7 @@ const sections = [
   },
   {
     id: "instrument-management",
-    label: "Instrument & Gateway Management",
+    label: "Instrument and Gateway Management",
     icon: <IconCpu className="size-5" />,
     description: "Manage instruments, gateways, and their connection details.",
   },
@@ -60,13 +61,13 @@ const sections = [
   },
   {
     id: "part-inspection-setup",
-    label: "Part & Inspection Setup",
+    label: "Part and Inspection Setup",
     icon: <IconSettingsAutomation className="size-5" />,
     description: "Configure parts, characteristics, and inspection plans.",
   },
   {
     id: "alerts-quality-events",
-    label: "Alerts & Quality Events",
+    label: "Alerts and Quality Events",
     icon: <IconBell className="size-5" />,
     description: "Review quality alerts and manage follow-up events.",
   },
@@ -84,7 +85,7 @@ const sections = [
   },
   {
     id: "users-permissions",
-    label: "Users & Permissions",
+    label: "Users and Permissions",
     icon: <IconUsers className="size-5" />,
     description: "Manage workspace users and their access permissions.",
   },
@@ -100,6 +101,32 @@ type SectionId = (typeof sections)[number]["id"];
 
 function isSectionId(value: string | undefined): value is SectionId {
   return sections.some((section) => section.id === value);
+}
+
+function WorkspaceMember() {
+  const { open } = useSidebar();
+
+  return (
+    <div
+      aria-label="Quality Team, Workspace member"
+      className="flex min-h-10 items-center gap-3 px-2.5"
+      title="Quality Team · Workspace member"
+    >
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
+        QT
+      </span>
+      {open && (
+        <div className="min-w-0 whitespace-nowrap">
+          <p className="truncate text-xs font-semibold text-slate-800">
+            Quality Team
+          </p>
+          <p className="truncate text-[11px] text-slate-500">
+            Workspace member
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -236,9 +263,9 @@ export default function Home() {
   );
 
   return (
-    <div className="flex min-h-dvh bg-[#f6f8fc]">
+    <div className="flex h-dvh overflow-hidden bg-[#f6f8fc]">
       <Sidebar open={mobileOpen} setOpen={setMobileOpen}>
-        <SidebarBody className="gap-6" showMobile={false}>
+        <SidebarBody className="h-full gap-6" showMobile={false}>
           <a
             aria-label="GAP-IT home"
             className="flex h-10 shrink-0 items-center gap-3 px-2.5"
@@ -263,20 +290,8 @@ export default function Home() {
             {navigation}
           </div>
 
-          <div className="mt-auto border-t border-slate-200 pt-4">
-            <div className="flex min-h-10 items-center gap-3 px-2.5">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
-                QT
-              </span>
-              <div className="min-w-0 whitespace-nowrap">
-                <p className="truncate text-xs font-semibold text-slate-800">
-                  Quality Team
-                </p>
-                <p className="truncate text-[11px] text-slate-500">
-                  Workspace member
-                </p>
-              </div>
-            </div>
+          <div className="mt-auto shrink-0 border-t border-slate-200 pt-4">
+            <WorkspaceMember />
           </div>
         </SidebarBody>
       </Sidebar>
@@ -321,9 +336,10 @@ export default function Home() {
           </div>
         </header>
 
-        <main className="hidden w-full flex-1 overflow-y-auto bg-slate-50 px-4 py-6 dark:bg-slate-950 md:block md:px-8 md:py-8">
+        <main className="hidden min-h-0 w-full flex-1 overflow-y-auto bg-slate-50 px-4 py-6 dark:bg-slate-950 md:block md:px-8 md:py-8">
           <WorkspaceModule
             activeSection={activeSection}
+            activeForStreaming
             data={data}
             onNavigate={navigateToSection}
             setData={setData}
@@ -379,6 +395,7 @@ export default function Home() {
           <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5">
             <WorkspaceModule
               activeSection={activeSection}
+              activeForStreaming={false}
               data={data}
               onNavigate={navigateToSection}
               setData={setData}

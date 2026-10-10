@@ -43,12 +43,21 @@ type Props = {
   data: DemoData;
   setData: Dispatch<SetStateAction<DemoData>>;
   onNavigate: (section: ModuleId) => void;
+  activeForStreaming: boolean;
 };
 
 const inputClass =
   "min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900";
 const cardClass =
   "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-5";
+
+function formatTimestamp(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(value));
+}
 
 function StatusPill({ status }: { status: string }) {
   const color =
@@ -144,7 +153,7 @@ function MeasurementRows({ rows, parts }: { rows: Measurement[]; parts: DemoData
             return (
               <tr key={row.id} className="text-slate-700 dark:text-slate-200">
                 <td className="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400">
-                  {new Date(row.timestamp).toLocaleString()}
+                  {formatTimestamp(row.timestamp)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-3 font-medium">{row.id}</td>
                 <td className="px-3 py-3">
@@ -169,7 +178,13 @@ function MeasurementRows({ rows, parts }: { rows: Measurement[]; parts: DemoData
   );
 }
 
-export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Props) {
+export function WorkspaceModule({
+  activeSection,
+  data,
+  setData,
+  onNavigate,
+  activeForStreaming,
+}: Props) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [instrumentFilter, setInstrumentFilter] = useState("All");
@@ -177,6 +192,7 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
   const [traceQuery, setTraceQuery] = useState("");
   const [traceSearched, setTraceSearched] = useState(false);
   const [notice, setNotice] = useState("");
@@ -251,7 +267,7 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
   const openEvents = data.events.filter((event) => event.status !== "Resolved").length;
 
   useEffect(() => {
-    if (!streaming || activeSection !== "live-measurements") return;
+    if (!activeForStreaming || !streaming || activeSection !== "live-measurements") return;
     const timer = window.setInterval(() => {
       setData((current) => {
         const availableParts = current.parts.filter((part) => part.active);
@@ -310,11 +326,18 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
       });
     }, data.settings.demoIntervalSeconds * 1000);
     return () => window.clearInterval(timer);
-  }, [activeSection, data.settings.demoIntervalSeconds, setData, streaming]);
+  }, [activeForStreaming, activeSection, data.settings.demoIntervalSeconds, setData, streaming]);
 
   useEffect(() => {
     setSettingsDraft(data.settings);
   }, [data.settings]);
+
+  useEffect(() => {
+    const updateTime = () => setLastUpdated(formatTimestamp(new Date().toISOString()));
+    updateTime();
+    const timer = window.setInterval(updateTime, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const exportMeasurements = (filename: string) => {
     const rows = filteredMeasurements.map((item) => {
@@ -517,7 +540,7 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
             <section className={cardClass}>
               <div className="mb-4 flex items-center justify-between">
                 <div><h2 className="font-semibold text-slate-900 dark:text-white">Measurement volume</h2><p className="text-xs text-slate-500 dark:text-slate-400">Last 24 hours · 2-hour intervals</p></div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Updated {new Date().toLocaleTimeString()}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Updated {lastUpdated || "—"}</span>
               </div>
               <div className="flex h-40 items-end gap-2 border-b border-slate-100 pb-1 dark:border-slate-800">
                 {volumeBars.map((value, index) => (
@@ -541,7 +564,7 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
               {latestEvents.length ? latestEvents.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 border-t border-slate-100 py-3 first:border-0 dark:border-slate-800">
                   <span className={`mt-1 size-2 shrink-0 rounded-full ${item.severity === "High" || item.severity === "Critical" ? "bg-rose-500" : "bg-amber-500"}`} />
-                  <div className="min-w-0 flex-1"><p className="text-sm font-medium text-slate-800 dark:text-slate-100">{item.description}</p><p className="mt-1 text-[11px] text-slate-500">{item.id} · {new Date(item.timestamp).toLocaleString()}</p></div>
+                  <div className="min-w-0 flex-1"><p className="text-sm font-medium text-slate-800 dark:text-slate-100">{item.description}</p><p className="mt-1 text-[11px] text-slate-500">{item.id} · {formatTimestamp(item.timestamp)}</p></div>
                   <StatusPill status={item.status} />
                 </div>
               )) : <EmptyState message="No quality events." />}
@@ -552,29 +575,6 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
             <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold text-slate-900 dark:text-white">Recent measurements</h2><span className="text-xs text-slate-500">{data.measurements.length} records</span></div>
             <MeasurementRows rows={recent} parts={data.parts} />
           </section>
-          <nav aria-label="Dashboard sections" className={`${cardClass} grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5`}>
-            {[
-              ["live-measurements", "Live Measurements"],
-              ["instrument-management", "Instruments & Gateways"],
-              ["spc-analytics", "SPC Analytics"],
-              ["spc-reports", "SPC Reports"],
-              ["part-inspection-setup", "Part & Inspection Setup"],
-              ["alerts-quality-events", "Alerts & Quality Events"],
-              ["traceability", "Traceability"],
-              ["history-data-explorer", "History & Data Explorer"],
-              ["users-permissions", "Users & Permissions"],
-              ["system-settings", "System Settings"],
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-blue-800 dark:hover:bg-blue-950"
-                onClick={() => onNavigate(id as ModuleId)}
-                type="button"
-              >
-                {label} →
-              </button>
-            ))}
-          </nav>
         </div>
       ));
     }
@@ -621,7 +621,7 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
       ));
     }
     case "instrument-management":
-      return shell("Instrument & Gateway Management", "Review demo device records, their simulated connection state, calibration dates, and assigned gateways.", (
+      return shell("Instrument and Gateway Management", "Review demo device records, their simulated connection state, calibration dates, and assigned gateways.", (
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <Metric label="Registered instruments" value={data.instruments.length} detail="Demo inventory" icon={<IconCpu className="size-5" />} />
@@ -731,14 +731,14 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
       ));
     }
     case "part-inspection-setup":
-      return shell("Part & Inspection Setup", "Maintain part revisions and characteristic specifications. Existing measurement records retain their historical values.", (
+      return shell("Part and Inspection Setup", "Maintain part revisions and characteristic specifications. Existing measurement records retain their historical values.", (
         <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <section className={cardClass}><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Part catalogue · active revision</h2><div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-xs"><thead className="border-b border-slate-200 text-[10px] uppercase text-slate-500 dark:border-slate-800"><tr>{["Part", "Revision", "Characteristic", "Nominal", "LSL", "USL", "Status"].map((x) => <th key={x} className="px-2 py-3 font-semibold">{x}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{data.parts.map((part) => <tr key={part.number}><td className="px-2 py-3"><b className="text-slate-800 dark:text-slate-100">{part.number}</b><span className="block text-slate-500">{part.name}</span></td><td className="px-2 py-3 text-slate-700 dark:text-slate-300">{part.revision}</td><td className="px-2 py-3 text-slate-700 dark:text-slate-300">{part.characteristic}</td><td className="px-2 py-3 font-mono">{part.nominal} {part.unit}</td><td className="px-2 py-3 font-mono">{part.lsl}</td><td className="px-2 py-3 font-mono">{part.usl}</td><td className="px-2 py-3"><StatusPill status={part.active ? "Active" : "Inactive"} /></td></tr>)}</tbody></table></div><p className="mt-3 text-xs text-slate-500">Inspection plans and immutable historical revisions require a backend before multi-user production use.</p></section>
           <section className={cardClass}><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Add a demo part</h2><form className="space-y-3" onSubmit={addPart}><div className="grid grid-cols-2 gap-2"><input aria-label="Part number" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, number: e.target.value })} placeholder="Part number" value={partDraft.number} /><input aria-label="Part name" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, name: e.target.value })} placeholder="Name" value={partDraft.name} /></div><input aria-label="Characteristic name" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, characteristic: e.target.value })} placeholder="Characteristic" value={partDraft.characteristic} /><div className="grid grid-cols-3 gap-2"><input aria-label="Nominal value" className={inputClass} min="0" onChange={(e) => setPartDraft({ ...partDraft, nominal: e.target.value })} placeholder="Nominal" step="any" type="number" value={partDraft.nominal} /><input aria-label="Lower specification limit" className={inputClass} min="0" onChange={(e) => setPartDraft({ ...partDraft, lsl: e.target.value })} placeholder="LSL" step="any" type="number" value={partDraft.lsl} /><input aria-label="Upper specification limit" className={inputClass} min="0" onChange={(e) => setPartDraft({ ...partDraft, usl: e.target.value })} placeholder="USL" step="any" type="number" value={partDraft.usl} /></div><p className="text-[11px] text-slate-500">Limits are validated: LSL ≤ nominal ≤ USL. Demo unit: mm.</p><button className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800" type="submit"><IconPlus className="size-4" /> Add part</button></form></section>
         </div>
       ));
     case "alerts-quality-events":
-      return shell("Alerts & Quality Events", "Track measurement-related demo events. Status, assignment, and investigation notes are saved with the local demo workspace.", (
+      return shell("Alerts and Quality Events", "Track measurement-related demo events. Status, assignment, and investigation notes are saved with the local demo workspace.", (
         <section className={cardClass}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold text-slate-900 dark:text-white">{openEvents} active events</h2>
@@ -756,7 +756,7 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
                         <StatusPill status={item.status} />
                       </div>
                       <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{item.description}</p>
-                      <p className="mt-1 text-xs text-slate-500">{item.type} · {item.source} · {new Date(item.timestamp).toLocaleString()} {item.measurementId && `· ${item.measurementId}`}</p>
+                      <p className="mt-1 text-xs text-slate-500">{item.type} · {item.source} · {formatTimestamp(item.timestamp)} {item.measurementId && `· ${item.measurementId}`}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {["Acknowledged", "Investigating", "Resolved"].map((status) => (
@@ -785,11 +785,11 @@ export function WorkspaceModule({ activeSection, data, setData, onNavigate }: Pr
       return shell("Traceability", "Search by part, batch, serial, or measurement ID to inspect connected production and quality records.", (
         <div className="space-y-4">
           <form className={`${cardClass} flex flex-col gap-2 sm:flex-row`} onSubmit={(event) => { event.preventDefault(); setTraceSearched(true); }}><label className="relative flex-1"><IconSearch aria-hidden="true" className="absolute left-3 top-3 size-4 text-slate-400" /><input aria-label="Part, serial, batch, or measurement ID" className={`${inputClass} pl-9`} onChange={(event) => setTraceQuery(event.target.value)} placeholder="Part, batch, serial or measurement ID" value={traceQuery} /></label><button className="min-h-10 rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800" type="submit">Search records</button><button className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => { setTraceQuery(""); setTraceSearched(false); }} type="button">Clear</button></form>
-          {traceSearched && <section className={cardClass}>{traceRecords.length ? <><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">{traceRecords.length} matching measurement records</h2><div className="space-y-3">{traceRecords.slice(0, 30).map((item) => { const part = partByNumber.get(item.partNumber); const instrument = data.instruments.find((device) => device.id === item.instrumentId); const event = data.events.find((qualityEvent) => qualityEvent.measurementId === item.id); return <article key={item.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><div className="flex flex-wrap items-center justify-between gap-2"><b className="text-sm text-slate-900 dark:text-white">{item.id} · {item.partNumber} · {item.serialNumber}</b><StatusPill status={item.status} /></div><div className="mt-3 grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-4"><span>Batch: <b>{item.batchId}</b></span><span>Characteristic: <b>{item.characteristic}</b></span><span>Value: <b>{item.value ?? "INVALID"} {item.unit}</b></span><span>Spec: <b>{part ? `${part.lsl}–${part.usl} ${part.unit}` : "—"}</b></span><span>Part revision: <b>{part?.revision ?? "—"}</b></span><span>Instrument: <b>{instrument?.name ?? item.instrumentId}</b></span><span>Gateway: <b>{instrument?.gatewayId ?? "—"}</b></span><span>Operator: <b>{item.operator}</b></span></div><p className="mt-2 text-[11px] text-slate-500">{new Date(item.timestamp).toLocaleString()}{event ? ` · Related event ${event.id}` : ""}</p></article>; })}</div></> : <EmptyState message="No records found. Try a part number (P001), batch ID, serial or measurement ID." />}</section>}
+          {traceSearched && <section className={cardClass}>{traceRecords.length ? <><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">{traceRecords.length} matching measurement records</h2><div className="space-y-3">{traceRecords.slice(0, 30).map((item) => { const part = partByNumber.get(item.partNumber); const instrument = data.instruments.find((device) => device.id === item.instrumentId); const event = data.events.find((qualityEvent) => qualityEvent.measurementId === item.id); return <article key={item.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><div className="flex flex-wrap items-center justify-between gap-2"><b className="text-sm text-slate-900 dark:text-white">{item.id} · {item.partNumber} · {item.serialNumber}</b><StatusPill status={item.status} /></div><div className="mt-3 grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-4"><span>Batch: <b>{item.batchId}</b></span><span>Characteristic: <b>{item.characteristic}</b></span><span>Value: <b>{item.value ?? "INVALID"} {item.unit}</b></span><span>Spec: <b>{part ? `${part.lsl}–${part.usl} ${part.unit}` : "—"}</b></span><span>Part revision: <b>{part?.revision ?? "—"}</b></span><span>Instrument: <b>{instrument?.name ?? item.instrumentId}</b></span><span>Gateway: <b>{instrument?.gatewayId ?? "—"}</b></span><span>Operator: <b>{item.operator}</b></span></div><p className="mt-2 text-[11px] text-slate-500">{formatTimestamp(item.timestamp)}{event ? ` · Related event ${event.id}` : ""}</p></article>; })}</div></> : <EmptyState message="No records found. Try a part number (P001), batch ID, serial or measurement ID." />}</section>}
         </div>
       ));
     case "users-permissions":
-      return shell("Users & Permissions", "Manage simulated demo accounts and roles. UI role labels are not authentication or backend access control.", (
+      return shell("Users and Permissions", "Manage simulated demo accounts and roles. UI role labels are not authentication or backend access control.", (
         <div className="space-y-4"><section className={cardClass}><div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-xs"><thead className="border-b border-slate-200 text-[10px] uppercase text-slate-500 dark:border-slate-800"><tr>{["User", "Email", "Role", "Account", "Action"].map((x) => <th key={x} className="px-3 py-3 font-semibold">{x}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{data.users.map((user) => <tr key={user.id}><td className="px-3 py-3 font-semibold text-slate-900 dark:text-white">{user.name}</td><td className="px-3 py-3 text-slate-600 dark:text-slate-300">{user.email}</td><td className="px-3 py-3"><select aria-label={`Role for ${user.name}`} className={`${inputClass} min-h-9 w-48`} onChange={(event) => setData((current) => ({ ...current, users: current.users.map((item) => item.id === user.id ? { ...item, role: event.target.value as typeof item.role } : item) }))} value={user.role}>{["Administrator", "Quality Engineer", "Operator", "Viewer"].map((role) => <option key={role}>{role}</option>)}</select></td><td className="px-3 py-3"><StatusPill status={user.active ? "Active" : "Disabled"} /></td><td className="px-3 py-3"><button className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => setData((current) => ({ ...current, users: current.users.map((item) => item.id === user.id ? { ...item, active: !item.active } : item) }))} type="button">{user.active ? "Disable" : "Enable"}</button></td></tr>)}</tbody></table></div><p className="mt-3 text-xs leading-5 text-slate-500">Passwords and real authentication are not stored in this frontend-only demo. Enforce authorization in a trusted backend before deployment with real users.</p></section><section className={cardClass}><h2 className="font-semibold text-slate-900 dark:text-white">Demo permission matrix</h2><div className="mt-3 grid grid-cols-[1.4fr_repeat(4,1fr)] gap-2 text-center text-[11px]"><b className="text-left">Module</b>{["Admin", "Engineer", "Operator", "Viewer"].map((x) => <b key={x}>{x}</b>)}{["Dashboard", "Live measurement", "Inspection setup", "SPC & reports", "Users & settings"].map((label, row) => <div key={label} className="contents"><span className="py-1 text-left text-slate-600 dark:text-slate-300">{label}</span>{Array.from({ length: 4 }, (_, col) => <span key={col} className="text-emerald-600">{col <= (row === 4 ? 0 : row === 2 || row === 3 ? 1 : 3) ? "✓" : "—"}</span>)}</div>)}</div></section></div>
       ));
     case "system-settings":
