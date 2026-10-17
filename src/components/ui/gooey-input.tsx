@@ -24,7 +24,7 @@ export const GooeyInput = forwardRef<HTMLInputElement, GooeyInputProps>(
         <input
           {...props}
           className={cn(
-            "emerald-input h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 dark:border-emerald-100/10 dark:bg-[#172522] dark:text-emerald-50 dark:focus:border-emerald-400",
+            "emerald-input h-10 w-full rounded-xl border border-slate-300 bg-slate-50/90 text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-blue-100/10 dark:bg-[#1c3048] dark:text-blue-50 dark:focus:border-sky-400",
             startAdornment ? "pl-9" : "pl-3",
             endAdornment ? "pr-14" : "pr-3",
             className,
