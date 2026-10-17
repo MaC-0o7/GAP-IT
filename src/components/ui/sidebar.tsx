@@ -109,7 +109,7 @@ function DesktopSidebar({
     <motion.aside
       aria-label="Main navigation"
       className={cn(
-        "hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-3 py-5 dark:border-slate-800 dark:bg-slate-950 md:flex",
+        "hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white/90 px-3 py-5 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 md:flex",
         className,
       )}
       animate={{ width: animate ? (open ? 272 : 76) : 272 }}
@@ -127,8 +127,8 @@ function MobileSidebar({ children }: { children: ReactNode }) {
   const { open, setOpen } = useSidebar();
 
   return (
-    <div className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
-      <span className="text-sm font-bold tracking-[0.16em] text-slate-900">
+    <div className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950 md:hidden">
+      <span className="text-sm font-bold tracking-[0.16em] text-slate-900 dark:text-white">
         GAP-IT
       </span>
       <button
@@ -144,13 +144,13 @@ function MobileSidebar({ children }: { children: ReactNode }) {
         {open && (
           <motion.div
             animate={{ opacity: 1, x: 0 }}
-            className="fixed inset-0 z-50 flex h-dvh w-full flex-col bg-white p-5"
+            className="fixed inset-0 z-50 flex h-dvh w-full flex-col bg-white p-5 dark:bg-slate-950"
             exit={{ opacity: 0, x: "-100%" }}
             initial={{ opacity: 0, x: "-100%" }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
           >
             <div className="mb-7 flex items-center justify-between">
-              <span className="text-sm font-bold tracking-[0.16em] text-slate-900">
+              <span className="text-sm font-bold tracking-[0.16em] text-slate-900 dark:text-white">
                 GAP-IT
               </span>
               <button
@@ -185,9 +185,9 @@ export function SidebarLink({
       aria-current={link.active ? "page" : undefined}
       aria-label={!open ? link.label : undefined}
       className={cn(
-        "group/sidebar flex min-h-10 items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
+        "group/sidebar relative flex min-h-10 items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
         link.active
-          ? "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+          ? "bg-blue-50 font-semibold text-[#163b65] before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-full before:bg-blue-600 dark:bg-blue-950 dark:text-blue-300"
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white",
         className,
       )}

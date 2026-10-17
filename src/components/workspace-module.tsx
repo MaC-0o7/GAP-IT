@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from
 import {
   IconActivity,
   IconAlertTriangle,
+  IconBell,
   IconCheck,
   IconCircleCheck,
   IconCpu,
@@ -50,7 +51,7 @@ type Props = {
 const inputClass =
   "min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900";
 const cardClass =
-  "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:p-5";
+  "rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.035)] dark:border-slate-800 dark:bg-slate-900 md:p-5";
 
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -528,53 +529,57 @@ export function WorkspaceModule({
       const maxBar = Math.max(...volumeBars, 1);
       return shell("Overview Dashboard", "Quality operations at a glance. KPIs are calculated from the shared demo measurement and device data.", (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Metric label="Total instruments" value={data.instruments.length} detail={`${data.instruments.filter((item) => item.online).length} currently online`} icon={<IconCpu className="size-5" />} />
-            <Metric label="Active gateways" value={data.gateways.filter((item) => item.online).length} detail={`${data.gateways.length} registered`} icon={<IconWifi className="size-5" />} />
-            <Metric label="Measurements today" value={daily.length} detail="From shared workspace data" icon={<IconActivity className="size-5" />} />
-            <Metric label="Pass rate" value={`${passRate}%`} detail={`${passCount} pass / ${failCount} fail`} icon={<IconCircleCheck className="size-5" />} />
-            <Metric label="Offline instruments" value={data.instruments.filter((item) => !item.online).length} detail="Simulated connection status" icon={<IconAlertTriangle className="size-5" />} />
-            <Metric label="Out of tolerance" value={failCount} detail={`${invalidCount} invalid readings excluded`} icon={<IconGauge className="size-5" />} />
-            <Metric label="Open quality events" value={openEvents} detail={`${data.events.length} total events`} icon={<IconAlertTriangle className="size-5" />} />
-            <Metric label="Active parts" value={data.parts.filter((item) => item.active).length} detail={`${data.parts.length} registered`} icon={<IconDatabase className="size-5" />} />
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <Metric label="Measurements today" value={daily.length} detail={`${data.measurements.length} total records`} icon={<IconActivity className="size-5" />} />
+            <Metric label="Accepted readings" value={passCount} detail="Within specification limits" icon={<IconCircleCheck className="size-5" />} />
+            <Metric label="Rejected readings" value={failCount} detail={`${invalidCount} invalid readings excluded`} icon={<IconAlertTriangle className="size-5" />} />
+            <Metric label="Quality pass rate" value={`${passRate}%`} detail={`${passCount} pass / ${failCount} fail`} icon={<IconGauge className="size-5" />} />
+            <Metric label="Active instruments" value={data.instruments.filter((item) => item.online).length} detail={`${data.instruments.length} registered · demo status`} icon={<IconCpu className="size-5" />} />
+            <Metric label="Open quality events" value={openEvents} detail={`${data.events.length} total events`} icon={<IconBell className="size-5" />} />
           </div>
-          <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <div className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
             <section className={cardClass}>
-              <div className="mb-4 flex items-center justify-between">
-                <div><h2 className="font-semibold text-slate-900 dark:text-white">Measurement volume</h2><p className="text-xs text-slate-500 dark:text-slate-400">Last 24 hours · 2-hour intervals</p></div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">Updated {lastUpdated || "—"}</span>
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-400">Production pulse</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Measurement volume</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Last 24 hours · 2-hour intervals</p></div>
+                <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">Updated {lastUpdated || "—"}</span>
               </div>
-              <div className="flex h-40 items-end gap-2 border-b border-slate-100 pb-1 dark:border-slate-800">
+              <div aria-label={`${daily.length} measurements recorded in the last 24 hours`} className="flex h-40 items-end gap-2 border-b border-slate-100 pb-1 dark:border-slate-800" role="img">
                 {volumeBars.map((value, index) => (
                   <div key={index} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
                     <span className="text-[9px] tabular-nums text-slate-500">{value || ""}</span>
-                    <div className="w-full rounded-t bg-blue-500/80" style={{ height: `${Math.max(value ? (value / maxBar) * 82 : 2, 2)}%` }} />
+                    <div className="w-full rounded-t bg-gradient-to-t from-blue-700 to-blue-400 transition-[height] duration-300" style={{ height: `${Math.max(value ? (value / maxBar) * 82 : 2, 2)}%` }} />
                   </div>
                 ))}
               </div>
-              <div className="mt-2 flex justify-between text-[10px] text-slate-400"><span>24h ago</span><span>Now</span></div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <button className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800" onClick={() => onNavigate("instrument-management")} type="button">Register instrument</button>
-                <button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200" onClick={() => onNavigate("part-inspection-setup")} type="button">Create part</button>
-                <button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200" onClick={() => onNavigate("live-measurements")} type="button">Live measurements</button>
-                <button className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200" onClick={() => onNavigate("spc-reports")} type="button">SPC report</button>
+              <div className="mt-2 flex justify-between text-[10px] font-medium text-slate-400"><span>24h ago</span><span>Now</span></div>
+              {daily.length === 0 && (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  No readings recorded in this 24-hour window.
+                </p>
+              )}
+              <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                <button className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-800" onClick={() => onNavigate("live-measurements")} type="button">Open live monitor</button>
+                <button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" onClick={() => onNavigate("spc-analytics")} type="button">View SPC analysis</button>
               </div>
             </section>
             <section className={cardClass}>
-              <h2 className="font-semibold text-slate-900 dark:text-white">Recent quality events</h2>
-              <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">Events linked to shared measurement records</p>
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-600 dark:text-rose-400">Needs attention</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Recent quality events</h2></div>
+                <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-700 dark:bg-rose-950 dark:text-rose-300">{openEvents} open</span>
+              </div>
+              <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">Prioritize current issues across the workspace</p>
               {latestEvents.length ? latestEvents.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 border-t border-slate-100 py-3 first:border-0 dark:border-slate-800">
-                  <span className={`mt-1 size-2 shrink-0 rounded-full ${item.severity === "High" || item.severity === "Critical" ? "bg-rose-500" : "bg-amber-500"}`} />
-                  <div className="min-w-0 flex-1"><p className="text-sm font-medium text-slate-800 dark:text-slate-100">{item.description}</p><p className="mt-1 text-[11px] text-slate-500">{item.id} · {formatTimestamp(item.timestamp)}</p></div>
+                  <span className={`mt-1 grid size-7 shrink-0 place-items-center rounded-lg ${item.severity === "High" || item.severity === "Critical" ? "bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300" : "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-300"}`}><IconAlertTriangle aria-hidden="true" className="size-3.5" /></span>
+                  <div className="min-w-0 flex-1"><p className="text-sm font-medium leading-5 text-slate-800 dark:text-slate-100">{item.description}</p><p className="mt-1 text-[11px] text-slate-500">{item.id} · {formatTimestamp(item.timestamp)}</p></div>
                   <StatusPill status={item.status} />
                 </div>
               )) : <EmptyState message="No quality events." />}
-              <button className="mt-2 text-xs font-semibold text-blue-700 hover:underline dark:text-blue-400" onClick={() => onNavigate("alerts-quality-events")} type="button">Open event centre →</button>
+              <button className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-left text-xs font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-50 dark:border-slate-700 dark:text-blue-400 dark:hover:bg-slate-800" onClick={() => onNavigate("alerts-quality-events")} type="button">Go to event centre <span aria-hidden="true">→</span></button>
             </section>
           </div>
           <section className={cardClass}>
-            <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold text-slate-900 dark:text-white">Recent measurements</h2><span className="text-xs text-slate-500">{data.measurements.length} records</span></div>
+            <div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Latest activity</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Recent measurements</h2></div><span className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">{data.measurements.length} records</span></div>
             <MeasurementRows rows={recent} parts={data.parts} />
           </section>
         </div>

@@ -3,13 +3,18 @@
 
 :root {
   color-scheme: light;
-  background: #f6f8fc;
+  background: #f5f7fa;
   color: #172033;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, "Segoe UI", Arial, Helvetica, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border-subtle: #e7edf4;
+  --text-muted: #64748b;
+  --brand-navy: #163b65;
 }
 
 * {
@@ -20,6 +25,7 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
+  background: #f5f7fa;
 }
 
 button,
@@ -29,19 +35,13 @@ a {
 
 button {
   position: relative;
-  transition-property: transform, box-shadow, background-color, border-color, color;
+  transition-property: box-shadow, background-color, border-color, color;
   transition-duration: 180ms;
   transition-timing-function: ease;
 }
 
 button:not(:disabled):hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgb(15 23 42 / 0.12);
-}
-
-button:not(:disabled):active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: none;
+  box-shadow: 0 3px 10px rgb(15 23 42 / 0.08);
 }
 
 button:focus-visible {
@@ -56,10 +56,5 @@ button:disabled {
 @media (prefers-reduced-motion: reduce) {
   button {
     transition-duration: 0ms;
-  }
-
-  button:not(:disabled):hover,
-  button:not(:disabled):active {
-    transform: none;
   }
 }
