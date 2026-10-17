@@ -21,6 +21,7 @@ import {
 } from "@tabler/icons-react";
 import { createDemoData, type DemoData } from "@/lib/demo-data";
 import { WorkspaceModule } from "@/components/workspace-module";
+import { GooeyInput } from "@/components/ui/gooey-input";
 import {
   Sidebar,
   SidebarBody,
@@ -362,11 +363,15 @@ export default function Home() {
           <div className="flex flex-1 items-center justify-end gap-3">
             <div className="relative w-full max-w-[360px]">
               <label className="sr-only" htmlFor="workspace-search">Search modules</label>
-              <IconSearch aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-              <input
+              <GooeyInput
                 autoComplete="off"
-                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-9 pr-14 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:bg-slate-900"
                 id="workspace-search"
+                startAdornment={<IconSearch aria-hidden="true" className="size-4" />}
+                endAdornment={
+                  <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-800">
+                    /
+                  </kbd>
+                }
                 onBlur={() => window.setTimeout(() => setSearchOpen(false), 150)}
                 onChange={(event) => setModuleSearch(event.target.value)}
                 onFocus={() => setSearchOpen(true)}
@@ -384,9 +389,6 @@ export default function Home() {
                 aria-controls="workspace-search-results"
                 value={moduleSearch}
               />
-              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-800">
-                /
-              </kbd>
               {searchOpen && moduleSearch.trim() && (
                 <div
                   className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
