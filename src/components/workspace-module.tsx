@@ -197,6 +197,7 @@ export function WorkspaceModule({
   const [endDate, setEndDate] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [lastUpdated, setLastUpdated] = useState("");
+  const [hasMounted, setHasMounted] = useState(false);
   const [traceQuery, setTraceQuery] = useState("");
   const [traceSearched, setTraceSearched] = useState(false);
   const [tracePart, setTracePart] = useState("All");
@@ -295,6 +296,10 @@ export function WorkspaceModule({
         (instrumentStatusFilter === "Online" ? instrument.online : !instrument.online))
     );
   });
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!activeForStreaming || !streaming || activeSection !== "live-measurements") return;
@@ -549,9 +554,11 @@ export function WorkspaceModule({
           ? 7 * 24 * 60 * 60 * 1000
           : 30 * 24 * 60 * 60 * 1000;
       const rangeLabel = dashboardRange === "24h" ? "24 hours" : dashboardRange === "7d" ? "7 days" : "30 days";
-      const daily = data.measurements.filter(
-        (item) => Date.now() - new Date(item.timestamp).getTime() < rangeMs,
-      );
+      const daily = hasMounted
+        ? data.measurements.filter(
+            (item) => Date.now() - new Date(item.timestamp).getTime() < rangeMs,
+          )
+        : [];
       const recent = [...data.measurements]
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
         .slice(0, 6);
@@ -559,6 +566,7 @@ export function WorkspaceModule({
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
         .slice(0, 4);
       const volumeBuckets = Array.from({ length: 12 }, (_, index) => {
+        if (!hasMounted) return 0;
         const bucketEnd = rangeMs * (index + 1) / 12;
         const bucketStart = rangeMs * index / 12;
         return data.measurements.filter((item) => {

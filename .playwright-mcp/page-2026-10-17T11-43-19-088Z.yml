@@ -1,0 +1,89 @@
+- generic [ref=f12e1]:
+  - generic [ref=f12e4]:
+    - generic [ref=f12e5]:
+      - button "Open navigation menu" [expanded] [active] [ref=f12e6]
+      - button "Back to dashboard" [ref=f12e482]
+      - generic [ref=f12e9]:
+        - paragraph [ref=f12e10]: Traceability
+        - paragraph [ref=f12e11]: Quality operations
+      - button "Switch to light theme" [ref=f12e350]
+    - dialog "Mobile navigation" [ref=f12e506]:
+      - generic [ref=f12e507]:
+        - generic [ref=f12e508]:
+          - generic [ref=f12e509]: G
+          - generic [ref=f12e510]:
+            - paragraph [ref=f12e511]: GAP-IT
+            - paragraph [ref=f12e512]: Quality workspace
+        - button "Close navigation menu" [ref=f12e513]
+      - navigation "Quality workspace sections" [ref=f12e517]:
+        - generic [ref=f12e518]:
+          - paragraph [ref=f12e519]: Workspace
+          - link "Overview" [ref=f12e521] [cursor=pointer]:
+            - /url: "#overview"
+        - generic [ref=f12e529]:
+          - paragraph [ref=f12e530]: Monitoring
+          - generic [ref=f12e531]:
+            - link "Live Measurements" [ref=f12e532] [cursor=pointer]:
+              - /url: "#live-measurements"
+            - link "Instruments & Gateways" [ref=f12e537] [cursor=pointer]:
+              - /url: "#instrument-management"
+        - generic [ref=f12e543]:
+          - paragraph [ref=f12e544]: Quality management
+          - generic [ref=f12e545]:
+            - link "SPC Analysis" [ref=f12e546] [cursor=pointer]:
+              - /url: "#spc-analytics"
+            - link "SPC Reports" [ref=f12e553] [cursor=pointer]:
+              - /url: "#spc-reports"
+            - link "Parts & Inspection" [ref=f12e561] [cursor=pointer]:
+              - /url: "#part-inspection-setup"
+            - link "Quality Events" [ref=f12e567] [cursor=pointer]:
+              - /url: "#alerts-quality-events"
+        - generic [ref=f12e573]:
+          - paragraph [ref=f12e574]: Traceability
+          - generic [ref=f12e575]:
+            - link "Traceability" [ref=f12e576] [cursor=pointer]:
+              - /url: "#traceability"
+            - link "Measurement History" [ref=f12e583] [cursor=pointer]:
+              - /url: "#history-data-explorer"
+        - generic [ref=f12e589]:
+          - paragraph [ref=f12e590]: Administration
+          - generic [ref=f12e591]:
+            - link "Users & Roles" [ref=f12e592] [cursor=pointer]:
+              - /url: "#users-permissions"
+            - link "System Settings" [ref=f12e600] [cursor=pointer]:
+              - /url: "#system-settings"
+      - generic [ref=f12e606]:
+        - generic [ref=f12e607]: QT
+        - generic [ref=f12e608]:
+          - paragraph [ref=f12e609]: Quality Team
+          - paragraph [ref=f12e610]: Workspace member
+    - main [ref=f12e15]:
+      - generic [ref=f12e16]:
+        - generic [ref=f12e17]:
+          - generic [ref=f12e18]:
+            - paragraph [ref=f12e19]: GAP-IT quality workspace
+            - heading "Traceability" [level=1] [ref=f12e485]
+            - paragraph [ref=f12e21]: Search by part, batch, serial, or measurement ID to inspect connected production and quality records.
+          - generic [ref=f12e22]: DEMO DATA — NO HARDWARE CONNECTED
+        - generic [ref=f12e486]:
+          - textbox "Part, serial, batch, or measurement ID" [ref=f12e491]:
+            - /placeholder: Part, batch, serial or measurement ID
+          - generic [ref=f12e492]:
+            - text: Part
+            - combobox "Traceability part filter" [ref=f12e493]:
+              - option "All parts" [selected]
+              - option "P001"
+              - option "P002"
+              - option "P003"
+          - generic [ref=f12e494]:
+            - text: From date
+            - textbox "Traceability start date" [ref=f12e495]
+          - generic [ref=f12e496]:
+            - text: To date
+            - textbox "Traceability end date" [ref=f12e497]
+          - generic [ref=f12e498]:
+            - button "Search records" [ref=f12e499]
+            - button "Clear filters" [ref=f12e500]
+            - button "Export CSV" [ref=f12e501]
+  - button "Open Next.js Dev Tools" [ref=f12e477] [cursor=pointer]
+  - alert [ref=f12e481]

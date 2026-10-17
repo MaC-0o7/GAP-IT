@@ -602,7 +602,9 @@ export default function Home() {
                     </div>
                     <button aria-label="Close navigation menu" className="grid size-10 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMobileOpen(false)} type="button"><IconX aria-hidden="true" className="size-5" /></button>
                   </div>
-                  <SectionNavigation activeSection={activeSection} onNavigate={navigateToSection} onSelect={() => setMobileOpen(false)} />
+                  <Sidebar open={mobileOpen} setOpen={setMobileOpen} animate={false}>
+                    <SectionNavigation activeSection={activeSection} onNavigate={navigateToSection} onSelect={() => setMobileOpen(false)} />
+                  </Sidebar>
                   <div className="mt-auto flex items-center gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
                     <span className="grid size-8 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">QT</span>
                     <div><p className="text-xs font-semibold text-slate-800 dark:text-slate-100">Quality Team</p><p className="text-[10px] text-slate-500">Workspace member</p></div>
