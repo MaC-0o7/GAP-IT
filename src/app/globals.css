@@ -15,6 +15,32 @@
   --border-subtle: #e7edf4;
   --text-muted: #64748b;
   --brand-navy: #163b65;
+  --emerald-bg: #101a19;
+  --emerald-panel: #172522;
+  --emerald-card: #1c2b28;
+  --emerald-glass: rgb(28 43 40 / 0.72);
+  --emerald-border: #36534a;
+  --emerald-primary: #10b981;
+  --emerald-highlight: #34d399;
+  --emerald-light: #a7f3d0;
+  --emerald-text: #ecfdf5;
+  --emerald-muted: #a7bdb3;
+  --app-background: #f5f7fa;
+  --app-foreground: #172033;
+  --app-card: #ffffff;
+  --app-border: #e7edf4;
+  --app-muted: #64748b;
+}
+
+:root.dark {
+  color-scheme: dark;
+  background: var(--emerald-bg);
+  color: var(--emerald-text);
+  --app-background: var(--emerald-bg);
+  --app-foreground: var(--emerald-text);
+  --app-card: var(--emerald-card);
+  --app-border: var(--emerald-border);
+  --app-muted: var(--emerald-muted);
 }
 
 * {
@@ -25,7 +51,114 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
+  color: var(--app-foreground);
+  background:
+    radial-gradient(ellipse at 15% 10%, rgb(16 185 129 / 0.18), transparent 38%),
+    radial-gradient(ellipse at 85% 80%, rgb(52 211 153 / 0.1), transparent 35%),
+    linear-gradient(135deg, var(--app-background), var(--emerald-panel), var(--app-background));
+  background-attachment: fixed;
+}
+
+:root:not(.dark) body {
   background: #f5f7fa;
+}
+
+.dark body {
+  background-color: var(--emerald-bg);
+  background-image:
+    radial-gradient(ellipse at 15% 10%, rgb(16 185 129 / 0.18), transparent 38%),
+    radial-gradient(ellipse at 85% 80%, rgb(52 211 153 / 0.1), transparent 35%),
+    repeating-linear-gradient(0deg, transparent 0 39px, rgb(167 243 208 / 0.018) 40px),
+    repeating-linear-gradient(90deg, transparent 0 39px, rgb(167 243 208 / 0.018) 40px),
+    linear-gradient(135deg, var(--emerald-bg), var(--emerald-panel), var(--emerald-bg));
+  background-attachment: fixed;
+}
+
+.app-shell {
+  background: var(--app-background);
+  color: var(--app-foreground);
+}
+
+.dark .app-shell {
+  background: transparent;
+}
+
+.app-main {
+  background: var(--app-background);
+}
+
+.dark .app-main {
+  background: transparent;
+}
+
+.emerald-card {
+  border: 1px solid var(--app-border);
+  background: var(--app-card);
+  box-shadow: 0 2px 10px rgb(15 23 42 / 0.035);
+}
+
+.dark .emerald-card {
+  border-color: rgb(167 243 208 / 0.12);
+  background: var(--emerald-glass);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.18), inset 0 1px rgb(236 253 245 / 0.025);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.emerald-input {
+  background: var(--app-card);
+  border-color: var(--app-border);
+  color: var(--app-foreground);
+}
+
+.dark .emerald-input {
+  background: rgb(23 37 34 / 0.92);
+  border-color: var(--emerald-border);
+  color: var(--emerald-text);
+}
+
+.dark .emerald-input::placeholder {
+  color: var(--emerald-muted);
+}
+
+.dark .emerald-input:focus {
+  border-color: var(--emerald-highlight);
+  outline-color: rgb(52 211 153 / 0.2);
+  box-shadow: 0 0 0 3px rgb(16 185 129 / 0.12);
+}
+
+.emerald-button {
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #059669, #10b981, #34d399);
+  color: #052e24;
+  transition: box-shadow 200ms ease, transform 200ms ease, filter 200ms ease;
+}
+
+.emerald-button:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 0 22px rgb(16 185 129 / 0.24);
+  transform: translateY(-1px);
+}
+
+.dark .glass-header {
+  border-color: rgb(167 243 208 / 0.12);
+  background: rgb(16 26 25 / 0.76);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.14);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.dark .emerald-glass {
+  border: 1px solid rgb(167 243 208 / 0.12);
+  background: var(--emerald-glass);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.18);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.dark .emerald-border-glow {
+  border-color: rgb(52 211 153 / 0.4);
+  box-shadow: 0 0 16px rgb(16 185 129 / 0.12);
 }
 
 button,
@@ -44,8 +177,12 @@ button:not(:disabled):hover {
   box-shadow: 0 3px 10px rgb(15 23 42 / 0.08);
 }
 
+.dark button:not(:disabled):hover {
+  box-shadow: 0 0 18px rgb(16 185 129 / 0.16);
+}
+
 button:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #10b981;
   outline-offset: 2px;
 }
 
@@ -54,7 +191,12 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button {
+  *,
+  *::before,
+  *::after {
     transition-duration: 0ms;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

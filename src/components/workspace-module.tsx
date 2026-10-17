@@ -51,9 +51,9 @@ type Props = {
 };
 
 const inputClass =
-  "min-h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-blue-900";
+  "emerald-input min-h-10 w-full rounded-lg border px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-emerald-900";
 const cardClass =
-  "rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.035)] dark:border-slate-800 dark:bg-slate-900 md:p-5";
+  "emerald-card rounded-2xl border p-4 md:p-5";
 
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -83,10 +83,10 @@ function PageIntro({ title, description }: { title: string; description: string 
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3 md:mb-7">
       <div>
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-blue-700 dark:text-blue-400">
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-300">
           GAP-IT quality workspace
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white md:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-emerald-50 md:text-3xl">
           {title}
         </h1>
         <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
@@ -122,7 +122,7 @@ function Metric({
           </p>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{detail}</p>
         </div>
-        <span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+        <span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
           {icon}
         </span>
       </div>
