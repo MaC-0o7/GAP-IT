@@ -201,6 +201,7 @@ function SectionNavigation({
 export default function Home() {
   const [activeSection, setActiveSection] = useState<SectionId>("overview");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moduleSearch, setModuleSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -345,7 +346,7 @@ export default function Home() {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-[#f5f7fa] dark:bg-slate-950">
-      <Sidebar open={mobileOpen} setOpen={setMobileOpen}>
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
         <SidebarBody className="h-full gap-6" showMobile={false}>
           <a
             aria-label="GAP-IT home"
