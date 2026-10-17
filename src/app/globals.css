@@ -1,46 +1,61 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme inline {
+  --color-background: var(--app-background);
+  --color-foreground: var(--app-foreground);
+  --color-steel-blue: var(--steel-blue);
+  --color-royal-blue: var(--royal-blue);
+  --color-muted-blue: var(--muted-blue);
+  --color-cyan: var(--cyan);
+  --color-border: var(--border-subtle);
+  --color-text: var(--text-color);
+}
+
 :root {
   color-scheme: light;
-  background: #f5f7fa;
-  color: #172033;
+  background: #f1f4f8;
+  color: #172b4d;
   font-family: Inter, "Segoe UI", Arial, Helvetica, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --border-subtle: #e7edf4;
-  --text-muted: #64748b;
-  --brand-navy: #163b65;
-  --emerald-bg: #101a19;
-  --emerald-panel: #172522;
-  --emerald-card: #1c2b28;
-  --emerald-glass: rgb(28 43 40 / 0.72);
-  --emerald-border: #36534a;
-  --emerald-primary: #10b981;
-  --emerald-highlight: #34d399;
-  --emerald-light: #a7f3d0;
-  --emerald-text: #ecfdf5;
-  --emerald-muted: #a7bdb3;
-  --app-background: #f5f7fa;
-  --app-foreground: #172033;
-  --app-card: #ffffff;
-  --app-border: #e7edf4;
-  --app-muted: #64748b;
+  --steel-blue: #334e68;
+  --royal-blue: #2563eb;
+  --muted-blue: #647e9a;
+  --cyan: #38bdf8;
+  --text-color: #172b4d;
+  --surface: #f8fafc;
+  --surface-muted: #eef2f7;
+  --border-subtle: #cbd5e1;
+  --shadow-soft: 0 8px 24px rgb(51 78 104 / 0.08);
+  --shadow-raised: 0 16px 40px rgb(51 78 104 / 0.14);
+  --app-background: #f1f4f8;
+  --app-foreground: #172b4d;
+  --app-card: #f8fafc;
+  --app-border: #cbd5e1;
+  --app-muted: #647e9a;
+  --dark-background: #142338;
+  --dark-panel: #1c3048;
+  --dark-card: #243a54;
+  --dark-glass: rgb(28 48 72 / 0.78);
+  --dark-border: #3b536d;
+  --dark-primary: #3b82f6;
+  --dark-highlight: #38bdf8;
+  --dark-text: #eff6ff;
+  --dark-muted: #b7c7d9;
 }
 
 :root.dark {
   color-scheme: dark;
-  background: var(--emerald-bg);
-  color: var(--emerald-text);
-  --app-background: var(--emerald-bg);
-  --app-foreground: var(--emerald-text);
-  --app-card: var(--emerald-card);
-  --app-border: var(--emerald-border);
-  --app-muted: var(--emerald-muted);
+  background: var(--dark-background);
+  color: var(--dark-text);
+  --app-background: var(--dark-background);
+  --app-foreground: var(--dark-text);
+  --app-card: var(--dark-card);
+  --app-border: var(--dark-border);
+  --app-muted: var(--dark-muted);
 }
 
 * {
@@ -53,24 +68,27 @@ body {
   min-height: 100dvh;
   color: var(--app-foreground);
   background:
-    radial-gradient(ellipse at 15% 10%, rgb(16 185 129 / 0.18), transparent 38%),
-    radial-gradient(ellipse at 85% 80%, rgb(52 211 153 / 0.1), transparent 35%),
-    linear-gradient(135deg, var(--app-background), var(--emerald-panel), var(--app-background));
+    radial-gradient(ellipse at 12% 8%, rgb(37 99 235 / 0.09), transparent 38%),
+    radial-gradient(ellipse at 88% 76%, rgb(56 189 248 / 0.08), transparent 34%),
+    radial-gradient(ellipse at 50% 0%, rgb(255 255 255 / 0.85), transparent 56%),
+    repeating-linear-gradient(0deg, transparent 0 47px, rgb(51 78 104 / 0.018) 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, rgb(51 78 104 / 0.018) 48px),
+    linear-gradient(135deg, #f8fafc, #eef2f7 54%, #e8eef5);
   background-attachment: fixed;
 }
 
 :root:not(.dark) body {
-  background: #f5f7fa;
+  background-color: #f1f4f8;
 }
 
 .dark body {
-  background-color: var(--emerald-bg);
+  background-color: var(--dark-background);
   background-image:
-    radial-gradient(ellipse at 15% 10%, rgb(16 185 129 / 0.18), transparent 38%),
-    radial-gradient(ellipse at 85% 80%, rgb(52 211 153 / 0.1), transparent 35%),
-    repeating-linear-gradient(0deg, transparent 0 39px, rgb(167 243 208 / 0.018) 40px),
-    repeating-linear-gradient(90deg, transparent 0 39px, rgb(167 243 208 / 0.018) 40px),
-    linear-gradient(135deg, var(--emerald-bg), var(--emerald-panel), var(--emerald-bg));
+    radial-gradient(ellipse at 15% 10%, rgb(37 99 235 / 0.2), transparent 38%),
+    radial-gradient(ellipse at 85% 80%, rgb(56 189 248 / 0.1), transparent 35%),
+    repeating-linear-gradient(0deg, transparent 0 47px, rgb(191 219 254 / 0.018) 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, rgb(191 219 254 / 0.018) 48px),
+    linear-gradient(135deg, var(--dark-background), var(--dark-panel), var(--dark-background));
   background-attachment: fixed;
 }
 
@@ -94,13 +112,13 @@ body {
 .emerald-card {
   border: 1px solid var(--app-border);
   background: var(--app-card);
-  box-shadow: 0 2px 10px rgb(15 23 42 / 0.035);
+  box-shadow: var(--shadow-soft);
 }
 
 .dark .emerald-card {
-  border-color: rgb(167 243 208 / 0.12);
-  background: var(--emerald-glass);
-  box-shadow: 0 8px 32px rgb(0 0 0 / 0.18), inset 0 1px rgb(236 253 245 / 0.025);
+  border-color: rgb(191 219 254 / 0.14);
+  background: var(--dark-glass);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.2), inset 0 1px rgb(239 246 255 / 0.035);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
@@ -112,144 +130,144 @@ body {
 }
 
 .dark .emerald-input {
-  background: rgb(23 37 34 / 0.92);
-  border-color: var(--emerald-border);
-  color: var(--emerald-text);
+  background: rgb(28 48 72 / 0.94);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
 }
 
 .dark .emerald-input::placeholder {
-  color: var(--emerald-muted);
+  color: var(--dark-muted);
 }
 
 .dark .emerald-input:focus {
-  border-color: var(--emerald-highlight);
-  outline-color: rgb(52 211 153 / 0.2);
-  box-shadow: 0 0 0 3px rgb(16 185 129 / 0.12);
+  border-color: var(--dark-highlight);
+  outline-color: rgb(56 189 248 / 0.2);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.16);
 }
 
 .emerald-button {
   border: 1px solid transparent;
-  background: linear-gradient(135deg, #059669, #10b981, #34d399);
-  color: #052e24;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb, #3b82f6);
+  color: #fff;
   transition: box-shadow 200ms ease, transform 200ms ease, filter 200ms ease;
 }
 
 .emerald-button:hover {
   filter: brightness(1.06);
-  box-shadow: 0 0 22px rgb(16 185 129 / 0.24);
+  box-shadow: 0 0 22px rgb(37 99 235 / 0.24);
   transform: translateY(-1px);
 }
 
 .dark .glass-header {
-  border-color: rgb(167 243 208 / 0.12);
-  background: rgb(16 26 25 / 0.76);
-  box-shadow: 0 8px 30px rgb(0 0 0 / 0.14);
+  border-color: rgb(191 219 254 / 0.14);
+  background: rgb(20 35 56 / 0.8);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.16);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
 
 .dark .emerald-glass {
-  border: 1px solid rgb(167 243 208 / 0.12);
-  background: var(--emerald-glass);
-  box-shadow: 0 8px 32px rgb(0 0 0 / 0.18);
+  border: 1px solid rgb(191 219 254 / 0.14);
+  background: var(--dark-glass);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.2);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
 
 .dark .emerald-border-glow {
-  border-color: rgb(52 211 153 / 0.4);
-  box-shadow: 0 0 16px rgb(16 185 129 / 0.12);
+  border-color: rgb(56 189 248 / 0.4);
+  box-shadow: 0 0 16px rgb(37 99 235 / 0.16);
 }
 
 .dark [class~="dark:bg-slate-950"] {
-  background-color: var(--emerald-bg);
+  background-color: var(--dark-background);
 }
 
 .dark [class~="dark:bg-slate-900"] {
-  background-color: var(--emerald-card);
+  background-color: var(--dark-card);
 }
 
 .dark [class~="dark:bg-slate-800"] {
-  background-color: var(--emerald-panel);
+  background-color: var(--dark-panel);
 }
 
 .dark [class~="dark:border-slate-800"],
 .dark [class~="dark:border-slate-700"] {
-  border-color: rgb(167 243 208 / 0.12);
+  border-color: rgb(191 219 254 / 0.14);
 }
 
 .dark [class~="dark:text-slate-50"],
 .dark [class~="dark:text-slate-100"],
 .dark [class~="dark:text-slate-200"] {
-  color: var(--emerald-text);
+  color: var(--dark-text);
 }
 
 .dark [class~="dark:text-slate-300"] {
-  color: rgb(236 253 245 / 0.82);
+  color: rgb(239 246 255 / 0.82);
 }
 
 .dark [class~="dark:text-slate-400"] {
-  color: var(--emerald-muted);
+  color: var(--dark-muted);
 }
 
 .dark [class~="dark:text-blue-300"],
 .dark [class~="dark:text-blue-400"],
 .dark [class~="dark:text-blue-500"],
 .dark [class~="dark:text-blue-600"] {
-  color: var(--emerald-highlight);
+  color: var(--dark-highlight);
 }
 
 .dark [class~="dark:bg-blue-950"] {
-  background-color: rgb(16 185 129 / 0.12);
+  background-color: rgb(37 99 235 / 0.16);
 }
 
 .dark [class~="bg-blue-50"],
 .dark [class~="bg-blue-100"] {
-  background-color: rgb(16 185 129 / 0.1);
+  background-color: rgb(37 99 235 / 0.12);
 }
 
 .dark [class~="border-blue-200"],
 .dark [class~="dark:border-blue-900"] {
-  border-color: rgb(52 211 153 / 0.28);
+  border-color: rgb(56 189 248 / 0.3);
 }
 
 .dark [class~="text-blue-600"],
 .dark [class~="text-blue-700"],
 .dark [class~="text-blue-800"] {
-  color: var(--emerald-highlight);
+  color: var(--dark-highlight);
 }
 
 .dark svg [stroke="#2563eb"] {
-  stroke: var(--emerald-highlight);
+  stroke: var(--dark-highlight);
 }
 
 .dark svg [fill="#2563eb"] {
-  fill: var(--emerald-highlight);
+  fill: var(--dark-highlight);
 }
 
 .dark svg [fill="#dbeafe"] {
-  fill: rgb(16 185 129 / 0.18);
+  fill: rgb(37 99 235 / 0.2);
 }
 
 .dark [class~="bg-blue-700"],
 .dark [class~="bg-blue-600"] {
   border-color: transparent;
-  background-color: var(--emerald-primary);
-  background-image: linear-gradient(135deg, #059669, #10b981, #34d399);
-  color: #052e24;
+  background-color: var(--dark-primary);
+  background-image: linear-gradient(135deg, #1d4ed8, #2563eb, #1e40af);
+  color: #fff;
 }
 
 .dark [class~="hover:bg-blue-800"]:hover,
 .dark [class~="hover:bg-blue-700"]:hover {
-  background-color: var(--emerald-highlight);
-  background-image: linear-gradient(135deg, #10b981, #34d399);
-  color: #052e24;
-  box-shadow: 0 0 22px rgb(16 185 129 / 0.28);
+  background-color: #2563eb;
+  background-image: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  box-shadow: 0 0 22px rgb(37 99 235 / 0.28);
 }
 
 .dark [class~="hover:bg-slate-800"]:hover,
 .dark [class~="hover:bg-slate-700"]:hover {
-  background-color: rgb(167 243 208 / 0.08);
+  background-color: rgb(191 219 254 / 0.08);
 }
 
 button,
@@ -265,15 +283,15 @@ button {
 }
 
 button:not(:disabled):hover {
-  box-shadow: 0 3px 10px rgb(15 23 42 / 0.08);
+  box-shadow: 0 3px 10px rgb(51 78 104 / 0.1);
 }
 
 .dark button:not(:disabled):hover {
-  box-shadow: 0 0 18px rgb(16 185 129 / 0.16);
+  box-shadow: 0 0 18px rgb(37 99 235 / 0.18);
 }
 
 button:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--royal-blue);
   outline-offset: 2px;
 }
 
