@@ -769,7 +769,6 @@ export function WorkspaceModule({
       const liveMax = latestPart ? latestPart.usl + (latestPart.usl - latestPart.lsl) * 0.15 : Math.max(...liveValues, 1);
       const liveX = (index: number) => 24 + index / Math.max(liveValues.length - 1, 1) * 652;
       const liveY = (value: number) => 136 - (value - liveMin) / Math.max(liveMax - liveMin, 0.001) * 112;
-      const liveChartPoints = liveValues.map((value, index) => `${liveX(index)},${liveY(value)}`).join(" ");
       return shell(title, description, (
         <div className="space-y-4">
           {live && (
@@ -803,7 +802,6 @@ export function WorkspaceModule({
                     {liveValues.length ? (
                       <svg aria-label="Recent measurement trend with specification limits" className="size-full overflow-visible" preserveAspectRatio="none" role="img" viewBox="0 0 700 150">
                         {latestPart && <><line x1="24" x2="676" y1={liveY(latestPart.usl)} y2={liveY(latestPart.usl)} stroke="#ef4444" strokeDasharray="5 4" /><line x1="24" x2="676" y1={liveY(latestPart.nominal)} y2={liveY(latestPart.nominal)} stroke="#2563eb" strokeDasharray="4 4" /><line x1="24" x2="676" y1={liveY(latestPart.lsl)} y2={liveY(latestPart.lsl)} stroke="#ef4444" strokeDasharray="5 4" /></>}
-                        {liveValues.length > 1 && <polyline fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={liveChartPoints} />}
                         {liveValues.map((value, index) => <circle key={livePoints[index].id} cx={liveX(index)} cy={liveY(value)} r="3" fill={latestPart && (value < latestPart.lsl || value > latestPart.usl) ? "#e11d48" : "#2563eb"} />)}
                       </svg>
                     ) : <div className="grid h-full place-items-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-500 dark:border-slate-700">No numeric readings match these filters.</div>}
