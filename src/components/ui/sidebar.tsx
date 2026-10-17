@@ -109,7 +109,7 @@ function DesktopSidebar({
     <motion.aside
       aria-label="Main navigation"
       className={cn(
-        "glass-header hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-300/70 bg-white/75 px-3 py-5 shadow-[8px_0_32px_rgba(51,78,104,0.06)] backdrop-blur-2xl dark:border-blue-100/10 dark:bg-[#142338]/85 dark:shadow-[8px_0_32px_rgba(0,0,0,0.2)]",
+        "glass-header hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-300/70 bg-white/75 px-3 py-5 shadow-[8px_0_32px_rgba(51,78,104,0.06)] backdrop-blur-2xl dark:border-blue-100/10 dark:bg-[#142338]/85 dark:shadow-[8px_0_32px_rgba(0,0,0,0.2)] md:flex",
         className,
       )}
       animate={{ width: animate ? (open ? 272 : 76) : 272 }}
@@ -127,14 +127,14 @@ function MobileSidebar({ children }: { children: ReactNode }) {
   const { open, setOpen } = useSidebar();
 
   return (
-    <div className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-emerald-100/10 dark:bg-[#101a19] md:hidden">
-      <span className="text-sm font-bold tracking-[0.16em] text-slate-900 dark:text-white">
+    <div className="flex h-14 items-center justify-between border-b border-slate-300/70 bg-[#f8fafc]/90 px-4 backdrop-blur-xl dark:border-blue-100/10 dark:bg-[#142338]/90 md:hidden">
+    <span className="text-sm font-bold tracking-[0.16em] text-[#172b4d] dark:text-blue-50">
         GAP-IT
       </span>
       <button
         aria-expanded={open}
         aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-        className="inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+        className="inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-blue-50 hover:text-blue-800"
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
@@ -144,18 +144,18 @@ function MobileSidebar({ children }: { children: ReactNode }) {
         {open && (
           <motion.div
             animate={{ opacity: 1, x: 0 }}
-            className="fixed inset-0 z-50 flex h-dvh w-full flex-col bg-white p-5 dark:bg-[#101a19]"
+            className="glass-header fixed inset-0 z-50 flex h-dvh w-full flex-col bg-[#f8fafc]/95 p-5 backdrop-blur-2xl dark:bg-[#142338]/95"
             exit={{ opacity: 0, x: "-100%" }}
             initial={{ opacity: 0, x: "-100%" }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
           >
             <div className="mb-7 flex items-center justify-between">
-              <span className="text-sm font-bold tracking-[0.16em] text-slate-900 dark:text-white">
+              <span className="text-sm font-bold tracking-[0.16em] text-[#172b4d] dark:text-blue-50">
                 GAP-IT
               </span>
               <button
                 aria-label="Close navigation menu"
-                className="inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+                className="inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-blue-50 hover:text-blue-800"
                 onClick={() => setOpen(false)}
                 type="button"
               >

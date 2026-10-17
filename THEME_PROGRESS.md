@@ -2,7 +2,7 @@
 
 - [x] 1. Design tokens: Tailwind config + global CSS (colours, gradients, shadows, background layers, pattern)
 - [x] 2. Shared primitives: Card, Button, Input/Search, Dropdown, Switch, Segmented control, Tabs
-- [ ] 3. App shell: frosted sidebar + top nav + active tab states + responsive behaviour
+- [x] 3. App shell: frosted sidebar + top nav + active tab states + responsive behaviour
 - [ ] 4. Overview
 - [ ] 5. Live Measurements
 - [ ] 6. Instruments & Gateways
@@ -24,7 +24,10 @@
 - Step completed: 2
 - Files modified: `src/components/ui/primitives.tsx`, `src/components/ui/gooey-input.tsx`, `src/components/ui/stateful-button.tsx`, `src/app/page.tsx`, `THEME_PROGRESS.md`
 - Check: `tsc --noEmit` passed
-- Next: Step 3 — app shell.
+- Step completed: 3
+- Files modified: `src/app/page.tsx`, `src/components/ui/sidebar.tsx`, `THEME_PROGRESS.md`
+- Check: `tsc --noEmit` passed
+- Next: Step 4 — Overview dashboard.
 
 ## Repo notes
 
