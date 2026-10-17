@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IconActivity,
   IconBell,
@@ -200,6 +200,7 @@ export default function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moduleSearch, setModuleSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [data, setData] = useState<DemoData>(createDemoData);
   const [isHydrated, setIsHydrated] = useState(false);
   const currentSection =
@@ -242,6 +243,30 @@ export default function Home() {
     document.documentElement.classList.toggle("dark", data.settings.theme === "dark");
     document.documentElement.style.colorScheme = data.settings.theme;
   }, [data.settings.theme]);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      const target = event.target;
+      const isTyping =
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+      if (event.key === "/" && !isTyping) {
+        event.preventDefault();
+        setSearchOpen(true);
+      } else if (event.key === "Escape") {
+        setSearchOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleSearchShortcut);
+    return () => window.removeEventListener("keydown", handleSearchShortcut);
+  }, []);
 
   useEffect(() => {
     const initialHash = window.location.hash.slice(1);
@@ -361,58 +386,84 @@ export default function Home() {
             </span>
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
-            <div className="relative w-full max-w-[360px]">
-              <label className="sr-only" htmlFor="workspace-search">Search modules</label>
-              <GooeyInput
-                autoComplete="off"
-                id="workspace-search"
-                startAdornment={<IconSearch aria-hidden="true" className="size-4" />}
-                endAdornment={
-                  <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-800">
-                    /
-                  </kbd>
-                }
-                onBlur={() => window.setTimeout(() => setSearchOpen(false), 150)}
-                onChange={(event) => setModuleSearch(event.target.value)}
-                onFocus={() => setSearchOpen(true)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && searchResults[0]) {
-                    navigateToSection(searchResults[0].id);
-                    setModuleSearch("");
-                    setSearchOpen(false);
-                  }
-                  if (event.key === "Escape") setSearchOpen(false);
-                }}
-                placeholder="Search modules…"
-                role="combobox"
-                aria-expanded={searchOpen && moduleSearch.trim().length > 0}
-                aria-controls="workspace-search-results"
-                value={moduleSearch}
-              />
-              {searchOpen && moduleSearch.trim() && (
+            <div className="relative">
+              <button
+                aria-label="Search modules"
+                aria-expanded={searchOpen}
+                aria-controls="workspace-search-popover"
+                className="grid size-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                onClick={() => setSearchOpen((open) => !open)}
+                title="Search modules ( / )"
+                type="button"
+              >
+                <IconSearch aria-hidden="true" className="size-[18px]" />
+              </button>
+              {searchOpen && (
                 <div
-                  className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
-                  id="workspace-search-results"
-                  role="listbox"
+                  className="absolute right-0 top-full z-50 w-[min(20rem,calc(100vw-2rem))] pt-2"
+                  id="workspace-search-popover"
                 >
-                  {searchResults.length ? searchResults.map((section) => (
-                    <button
-                      className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-blue-300"
-                      key={section.id}
-                      onClick={() => {
-                        navigateToSection(section.id);
-                        setModuleSearch("");
-                        setSearchOpen(false);
+                  <div
+                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
+                    onBlur={(event) => {
+                      if (
+                        !(event.relatedTarget instanceof Node) ||
+                        !event.currentTarget.contains(event.relatedTarget)
+                      ) {
+                        window.setTimeout(() => setSearchOpen(false), 150);
+                      }
+                    }}
+                  >
+                    <label className="sr-only" htmlFor="workspace-search">Search modules</label>
+                    <GooeyInput
+                      autoComplete="off"
+                      id="workspace-search"
+                      onChange={(event) => setModuleSearch(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && searchResults[0]) {
+                          navigateToSection(searchResults[0].id);
+                          setModuleSearch("");
+                          setSearchOpen(false);
+                        }
                       }}
-                      role="option"
-                      type="button"
-                    >
-                      <span className="text-blue-600">{section.icon}</span>
-                      <span>{section.label}</span>
-                    </button>
-                  )) : (
-                    <p className="px-3 py-4 text-center text-xs text-slate-500">No modules found.</p>
-                  )}
+                      placeholder="Search..."
+                      ref={searchInputRef}
+                      role="combobox"
+                      aria-expanded={moduleSearch.trim().length > 0}
+                      aria-controls="workspace-search-results"
+                      value={moduleSearch}
+                    />
+                    {moduleSearch.trim() && (
+                      <div
+                        className="mt-2 max-h-72 overflow-y-auto border-t border-slate-100 pt-2 dark:border-slate-800"
+                        id="workspace-search-results"
+                        role="listbox"
+                      >
+                        {searchResults.length ? searchResults.map((section) => (
+                          <button
+                            className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                            key={section.id}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              navigateToSection(section.id);
+                              setModuleSearch("");
+                              setSearchOpen(false);
+                            }}
+                            role="option"
+                            type="button"
+                          >
+                            <span className="text-blue-600">{section.icon}</span>
+                            <span>{section.label}</span>
+                          </button>
+                        )) : (
+                          <p className="px-3 py-4 text-center text-xs text-slate-500">No modules found.</p>
+                        )}
+                      </div>
+                    )}
+                    {!moduleSearch.trim() && (
+                      <p className="px-1 pt-2 text-[10px] text-slate-400">Press Enter to open the first result · Esc to close</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

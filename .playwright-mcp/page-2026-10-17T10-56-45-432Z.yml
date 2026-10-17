@@ -1,0 +1,65 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - complementary "Main navigation" [ref=f2e3]:
+      - link "GAP-IT home" [ref=f2e4] [cursor=pointer]:
+        - /url: "#overview"
+        - generic [aria-hidden] [ref=f2e5]: G
+        - generic [ref=f2e6]: GAP-IT
+      - navigation "Quality workspace sections" [ref=f2e8]:
+        - link "Overview" [ref=f2e11] [cursor=pointer]:
+          - /url: "#overview"
+        - generic [ref=f2e20]:
+          - link "Live Measurements" [ref=f2e21] [cursor=pointer]:
+            - /url: "#live-measurements"
+          - link "Instruments & Gateways" [ref=f2e26] [cursor=pointer]:
+            - /url: "#instrument-management"
+        - generic [ref=f2e33]:
+          - link "SPC Analysis" [ref=f2e34] [cursor=pointer]:
+            - /url: "#spc-analytics"
+          - link "SPC Reports" [ref=f2e41] [cursor=pointer]:
+            - /url: "#spc-reports"
+          - link "Parts & Inspection" [ref=f2e49] [cursor=pointer]:
+            - /url: "#part-inspection-setup"
+          - link "Quality Events" [ref=f2e55] [cursor=pointer]:
+            - /url: "#alerts-quality-events"
+        - generic [ref=f2e62]:
+          - link "Traceability" [ref=f2e63] [cursor=pointer]:
+            - /url: "#traceability"
+          - link "Measurement History" [ref=f2e70] [cursor=pointer]:
+            - /url: "#history-data-explorer"
+        - generic [ref=f2e77]:
+          - link "Users & Roles" [ref=f2e78] [cursor=pointer]:
+            - /url: "#users-permissions"
+          - link "System Settings" [ref=f2e86] [cursor=pointer]:
+            - /url: "#system-settings"
+      - generic "Quality Team, Workspace member" [ref=f2e93]: QT
+    - generic [ref=f2e95]:
+      - banner [ref=f2e96]:
+        - generic [ref=f2e97]:
+          - generic [ref=f2e102]: Quality Operations
+          - generic [aria-hidden] [ref=f2e103]: /
+          - generic [ref=f2e104]: Traceability
+        - generic [ref=f2e105]:
+          - button "Search modules" [ref=f2e107]
+          - generic [ref=f2e111]: DEMO · NO HARDWARE
+          - button "3 open quality events" [ref=f2e112]
+          - button "Switch to light theme" [ref=f2e371]
+          - generic [ref=f2e120]:
+            - generic [ref=f2e121]: QT
+            - generic [ref=f2e122]:
+              - paragraph [ref=f2e123]: Quality Team
+              - paragraph [ref=f2e124]: Workspace member
+      - main [ref=f2e125]:
+        - generic [ref=f2e126]:
+          - generic [ref=f2e127]:
+            - generic [ref=f2e128]:
+              - paragraph [ref=f2e129]: GAP-IT quality workspace
+              - heading "Traceability" [level=1] [ref=f2e398]
+              - paragraph [ref=f2e131]: Search by part, batch, serial, or measurement ID to inspect connected production and quality records.
+            - generic [ref=f2e132]: DEMO DATA — NO HARDWARE CONNECTED
+          - generic [ref=f2e399]:
+            - textbox "Part, serial, batch, or measurement ID" [ref=f2e404]:
+              - /placeholder: Part, batch, serial or measurement ID
+            - button "Search records" [ref=f2e405]
+            - button "Clear" [ref=f2e406]
+  - alert [ref=f2e389]
