@@ -5,6 +5,7 @@ import {
   IconActivity,
   IconAlertTriangle,
   IconBell,
+  IconChartBar,
   IconCheck,
   IconCircleCheck,
   IconCpu,
@@ -24,6 +25,7 @@ import {
   measurementStatus,
   type DemoData,
   type Measurement,
+  type QualityEvent,
 } from "@/lib/demo-data";
 import { StatefulButton } from "@/components/ui/stateful-button";
 
@@ -197,8 +199,24 @@ export function WorkspaceModule({
   const [lastUpdated, setLastUpdated] = useState("");
   const [traceQuery, setTraceQuery] = useState("");
   const [traceSearched, setTraceSearched] = useState(false);
+  const [tracePart, setTracePart] = useState("All");
+  const [traceStart, setTraceStart] = useState("");
+  const [traceEnd, setTraceEnd] = useState("");
+  const [expandedTraceId, setExpandedTraceId] = useState("");
   const [notice, setNotice] = useState("");
   const [eventNoteDrafts, setEventNoteDrafts] = useState<Record<string, string>>({});
+  const [eventRootDrafts, setEventRootDrafts] = useState<Record<string, string>>({});
+  const [eventActionDrafts, setEventActionDrafts] = useState<Record<string, string>>({});
+  const [dashboardRange, setDashboardRange] = useState("24h");
+  const [instrumentSearch, setInstrumentSearch] = useState("");
+  const [instrumentStatusFilter, setInstrumentStatusFilter] = useState("All");
+  const [expandedInstrument, setExpandedInstrument] = useState("");
+  const [spcPartNumber, setSpcPartNumber] = useState("");
+  const [eventDraft, setEventDraft] = useState({
+    description: "",
+    severity: "Medium" as QualityEvent["severity"],
+    source: "",
+  });
   const [partDraft, setPartDraft] = useState({
     number: "",
     name: "",
@@ -206,6 +224,7 @@ export function WorkspaceModule({
     nominal: "",
     lsl: "",
     usl: "",
+    unit: "mm",
   });
   const [settingsDraft, setSettingsDraft] = useState(data.settings);
   const [settingsDirty, setSettingsDirty] = useState(false);
@@ -268,6 +287,14 @@ export function WorkspaceModule({
   const validCount = passCount + failCount;
   const passRate = validCount ? Math.round((passCount / validCount) * 100) : 0;
   const openEvents = data.events.filter((event) => event.status !== "Resolved").length;
+  const matchingInstruments = data.instruments.filter((instrument) => {
+    const searchText = `${instrument.name} ${instrument.id} ${instrument.model} ${instrument.line} ${instrument.gatewayId}`.toLowerCase();
+    return (
+      (!instrumentSearch.trim() || searchText.includes(instrumentSearch.trim().toLowerCase())) &&
+      (instrumentStatusFilter === "All" ||
+        (instrumentStatusFilter === "Online" ? instrument.online : !instrument.online))
+    );
+  });
 
   useEffect(() => {
     if (!activeForStreaming || !streaming || activeSection !== "live-measurements") return;
@@ -476,22 +503,28 @@ export function WorkspaceModule({
           nominal,
           lsl,
           usl,
-          unit: "mm",
+          unit: partDraft.unit,
           active: true,
         },
       ],
     }));
-    setPartDraft({ number: "", name: "", characteristic: "Width", nominal: "", lsl: "", usl: "" });
+    setPartDraft({ number: "", name: "", characteristic: "Width", nominal: "", lsl: "", usl: "", unit: "mm" });
     setNotice("Part created in the local demo workspace.");
   };
 
-  const matchingTrace = data.measurements.filter((item) =>
-    [item.id, item.partNumber, item.serialNumber, item.batchId]
-      .join(" ")
-      .toLowerCase()
-      .includes(traceQuery.trim().toLowerCase()),
-  );
-  const traceRecords = traceSearched && traceQuery.trim() ? matchingTrace : [];
+  const matchingTrace = data.measurements
+    .filter((item) =>
+      (!traceQuery.trim() ||
+        [item.id, item.partNumber, item.serialNumber, item.batchId]
+          .join(" ")
+          .toLowerCase()
+          .includes(traceQuery.trim().toLowerCase())) &&
+      (tracePart === "All" || item.partNumber === tracePart) &&
+      (!traceStart || item.timestamp.slice(0, 10) >= traceStart) &&
+      (!traceEnd || item.timestamp.slice(0, 10) <= traceEnd),
+    )
+    .sort((left, right) => right.timestamp.localeCompare(left.timestamp));
+  const traceRecords = traceSearched ? matchingTrace : [];
 
   const shell = (title: string, description: string, content: React.ReactNode) => (
     <div className="mx-auto w-full max-w-7xl">
@@ -510,8 +543,14 @@ export function WorkspaceModule({
 
   switch (activeSection) {
     case "overview": {
+      const rangeMs = dashboardRange === "24h"
+        ? 24 * 60 * 60 * 1000
+        : dashboardRange === "7d"
+          ? 7 * 24 * 60 * 60 * 1000
+          : 30 * 24 * 60 * 60 * 1000;
+      const rangeLabel = dashboardRange === "24h" ? "24 hours" : dashboardRange === "7d" ? "7 days" : "30 days";
       const daily = data.measurements.filter(
-        (item) => Date.now() - new Date(item.timestamp).getTime() < 24 * 60 * 60 * 1000,
+        (item) => Date.now() - new Date(item.timestamp).getTime() < rangeMs,
       );
       const recent = [...data.measurements]
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
@@ -519,14 +558,38 @@ export function WorkspaceModule({
       const latestEvents = [...data.events]
         .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
         .slice(0, 4);
-      const volumeBars = Array.from({ length: 12 }, (_, index) => {
-        const cutoff = Date.now() - (11 - index) * 2 * 60 * 60 * 1000;
+      const volumeBuckets = Array.from({ length: 12 }, (_, index) => {
+        const bucketEnd = rangeMs * (index + 1) / 12;
+        const bucketStart = rangeMs * index / 12;
         return data.measurements.filter((item) => {
           const age = Date.now() - new Date(item.timestamp).getTime();
-          return age >= (11 - index) * 2 * 60 * 60 * 1000 && age < (12 - index) * 2 * 60 * 60 * 1000;
+          return age >= bucketStart && age < bucketEnd;
         }).length;
       });
-      const maxBar = Math.max(...volumeBars, 1);
+      const maxBucket = Math.max(...volumeBuckets, 1);
+      const trendPoints = volumeBuckets.map((value, index) =>
+        `${32 + (index / Math.max(volumeBuckets.length - 1, 1)) * 660},${152 - (value / maxBucket) * 120}`,
+      ).join(" ");
+      const trendArea = `32,152 ${trendPoints} 692,152`;
+      const activity = [
+        ...latestEvents.map((event) => ({
+          id: event.id,
+          label: event.description,
+          detail: `${event.severity} event · ${event.status}`,
+          timestamp: event.timestamp,
+          kind: "event" as const,
+        })),
+        ...recent.slice(0, 4).map((measurement) => ({
+          id: measurement.id,
+          label: `${measurement.characteristic} ${measurement.value ?? "Invalid"} ${measurement.unit}`,
+          detail: `${measurement.partNumber} · ${measurement.instrumentId} · ${measurement.status}`,
+          timestamp: measurement.timestamp,
+          kind: "measurement" as const,
+        })),
+      ].sort((left, right) => right.timestamp.localeCompare(left.timestamp)).slice(0, 6);
+      const totalStatus = Math.max(data.measurements.length, 1);
+      const passAngle = (passCount / totalStatus) * 360;
+      const failAngle = passAngle + (failCount / totalStatus) * 360;
       return shell("Overview Dashboard", "Quality operations at a glance. KPIs are calculated from the shared demo measurement and device data.", (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -540,23 +603,36 @@ export function WorkspaceModule({
           <div className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
             <section className={cardClass}>
               <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-400">Production pulse</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Measurement volume</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Last 24 hours · 2-hour intervals</p></div>
-                <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">Updated {lastUpdated || "—"}</span>
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-400">Production pulse</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Measurement trend</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Past {rangeLabel} · {daily.length} readings</p></div>
+                <div className="flex items-center gap-2">
+                  <label className="sr-only" htmlFor="dashboard-date-range">Dashboard date range</label>
+                  <select id="dashboard-date-range" aria-label="Dashboard date range" className={`${inputClass} min-h-9 w-auto py-1 text-xs`} onChange={(event) => setDashboardRange(event.target.value)} value={dashboardRange}>
+                    <option value="24h">Last 24 hours</option>
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                  </select>
+                  <span className="hidden rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400 sm:inline">Updated {lastUpdated || "—"}</span>
+                </div>
               </div>
-              <div aria-label={`${daily.length} measurements recorded in the last 24 hours`} className="flex h-40 items-end gap-2 border-b border-slate-100 pb-1 dark:border-slate-800" role="img">
-                {volumeBars.map((value, index) => (
-                  <div key={index} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                    <span className="text-[9px] tabular-nums text-slate-500">{value || ""}</span>
-                    <div className="w-full rounded-t bg-gradient-to-t from-blue-700 to-blue-400 transition-[height] duration-300" style={{ height: `${Math.max(value ? (value / maxBar) * 82 : 2, 2)}%` }} />
+              <div className="h-44">
+                {daily.length ? (
+                  <svg aria-label={`${daily.length} measurements over the past ${rangeLabel}`} className="size-full overflow-visible" preserveAspectRatio="none" role="img" viewBox="0 0 724 170">
+                    {[32, 72, 112, 152].map((yPosition) => <line key={yPosition} x1="32" x2="692" y1={yPosition} y2={yPosition} stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray={yPosition === 152 ? undefined : "3 5"} />)}
+                    <polygon points={trendArea} fill="#dbeafe" fillOpacity="0.72" />
+                    <polyline fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={trendPoints} />
+                    {volumeBuckets.map((value, index) => value > 0 && <circle key={index} cx={32 + (index / Math.max(volumeBuckets.length - 1, 1)) * 660} cy={152 - (value / maxBucket) * 120} r="3.5" fill="#2563eb" stroke="white" strokeWidth="2" />)}
+                  </svg>
+                ) : (
+                  <div className="grid h-full place-items-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-500 dark:border-slate-700">
+                    No readings in this range.
                   </div>
-                ))}
+                )}
               </div>
-              <div className="mt-2 flex justify-between text-[10px] font-medium text-slate-400"><span>24h ago</span><span>Now</span></div>
-              {daily.length === 0 && (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  No readings recorded in this 24-hour window.
-                </p>
-              )}
+              <div className="mt-1 flex justify-between text-[10px] font-medium text-slate-400"><span>{rangeLabel} ago</span><span>Now</span></div>
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-500">
+                <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-blue-600" /> Measurements</span>
+                <span>Peak bucket: {maxBucket}</span>
+              </div>
               <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                 <button className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-800" onClick={() => onNavigate("live-measurements")} type="button">Open live monitor</button>
                 <button className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" onClick={() => onNavigate("spc-analytics")} type="button">View SPC analysis</button>
@@ -578,6 +654,74 @@ export function WorkspaceModule({
               <button className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-left text-xs font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-50 dark:border-slate-700 dark:text-blue-400 dark:hover:bg-slate-800" onClick={() => onNavigate("alerts-quality-events")} type="button">Go to event centre <span aria-hidden="true">→</span></button>
             </section>
           </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <section className={cardClass}>
+              <div className="flex items-start justify-between">
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">Quality mix</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Inspection results</h2></div>
+                <span className="text-xs text-slate-500">{data.measurements.length} total</span>
+              </div>
+              <div className="mt-4 flex items-center gap-5">
+                <div
+                  aria-label={`${passCount} pass, ${failCount} fail, ${invalidCount} invalid`}
+                  className="relative grid size-28 shrink-0 place-items-center rounded-full"
+                  role="img"
+                  style={{ background: `conic-gradient(#10b981 0 ${passCount / totalStatus * 100}%, #f43f5e ${passCount / totalStatus * 100}% ${(passCount + failCount) / totalStatus * 100}%, #f59e0b ${(passCount + failCount) / totalStatus * 100}% 100%)` }}
+                >
+                  <div className="grid size-[76px] place-items-center rounded-full bg-white text-center dark:bg-slate-900">
+                    <div><p className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{passRate}%</p><p className="text-[9px] font-semibold uppercase text-slate-400">Pass rate</p></div>
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1 space-y-2 text-xs">
+                  {[["Pass", passCount, "bg-emerald-500"], ["Fail", failCount, "bg-rose-500"], ["Invalid", invalidCount, "bg-amber-500"]].map(([label, count, color]) => (
+                    <div className="flex items-center justify-between gap-3" key={label}>
+                      <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300"><span className={`size-2 rounded-full ${color}`} />{label}</span>
+                      <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="mb-1 flex justify-between text-[10px] text-slate-500"><span>Accepted to target</span><span>{passRate}%</span></div>
+                <div aria-label={`Quality pass rate ${passRate}%`} className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" role="progressbar" aria-valuenow={passRate} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-emerald-500 transition-[width]" style={{ width: `${passRate}%` }} />
+                </div>
+              </div>
+            </section>
+            <section className={cardClass}>
+              <div className="flex items-start justify-between gap-2">
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:text-blue-400">Device status</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Instruments</h2></div>
+                <button className="text-[11px] font-semibold text-blue-700 hover:underline dark:text-blue-400" onClick={() => onNavigate("instrument-management")} type="button">View all</button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {data.instruments.slice(0, 3).map((instrument) => (
+                  <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-2.5 dark:border-slate-800" key={instrument.id}>
+                    <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${instrument.online ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300"}`}><IconCpu aria-hidden="true" className="size-4" /></span>
+                    <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{instrument.name}</p><p className="text-[10px] text-slate-500">{instrument.id} · {formatTimestamp(instrument.lastSeen)}</p></div>
+                    <StatusPill status={instrument.online ? "Online" : "Offline"} />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] text-slate-400">Connection status is simulated demo data.</p>
+            </section>
+            <section className={cardClass}>
+              <div className="flex items-start justify-between gap-2">
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-400">Workspace feed</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Recent activity</h2></div>
+                <span className="text-[10px] text-slate-400">Latest 6</span>
+              </div>
+              {activity.length ? (
+                <ol className="mt-3 space-y-3">
+                  {activity.map((item) => (
+                    <li className="flex gap-3" key={`${item.kind}-${item.id}`}>
+                      <span className={`mt-1 grid size-7 shrink-0 place-items-center rounded-full ${item.kind === "event" ? "bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300" : "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-300"}`}>
+                        {item.kind === "event" ? <IconBell aria-hidden="true" className="size-3.5" /> : <IconActivity aria-hidden="true" className="size-3.5" />}
+                      </span>
+                      <div className="min-w-0 flex-1"><p className="truncate text-xs font-medium text-slate-800 dark:text-slate-100">{item.label}</p><p className="mt-0.5 truncate text-[10px] text-slate-500">{item.detail}</p><time className="mt-0.5 block text-[10px] text-slate-400" dateTime={item.timestamp}>{formatTimestamp(item.timestamp)}</time></div>
+                    </li>
+                  ))}
+                </ol>
+              ) : <EmptyState message="No recent activity." />}
+            </section>
+          </div>
           <section className={cardClass}>
             <div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Latest activity</p><h2 className="mt-1 font-semibold text-slate-900 dark:text-white">Recent measurements</h2></div><span className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">{data.measurements.length} records</span></div>
             <MeasurementRows rows={recent} parts={data.parts} />
@@ -592,8 +736,63 @@ export function WorkspaceModule({
       const description = live
         ? "Monitor simulated incoming readings. No physical measurement devices are connected."
         : "Search and export persistent historical readings from the shared workspace.";
+      const latestMeasurement = filteredMeasurements[0];
+      const latestPart = latestMeasurement
+        ? partByNumber.get(latestMeasurement.partNumber)
+        : undefined;
+      const livePoints = filteredMeasurements
+        .filter((item) => item.value !== null)
+        .slice(0, 24)
+        .reverse();
+      const liveValues = livePoints.map((item) => item.value as number);
+      const liveMin = latestPart ? latestPart.lsl - (latestPart.usl - latestPart.lsl) * 0.15 : Math.min(...liveValues, 0);
+      const liveMax = latestPart ? latestPart.usl + (latestPart.usl - latestPart.lsl) * 0.15 : Math.max(...liveValues, 1);
+      const liveX = (index: number) => 24 + index / Math.max(liveValues.length - 1, 1) * 652;
+      const liveY = (value: number) => 136 - (value - liveMin) / Math.max(liveMax - liveMin, 0.001) * 112;
+      const liveChartPoints = liveValues.map((value, index) => `${liveX(index)},${liveY(value)}`).join(" ");
       return shell(title, description, (
         <div className="space-y-4">
+          {live && (
+            <section className={cardClass}>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className={`grid size-10 place-items-center rounded-xl ${streaming ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}><IconActivity aria-hidden="true" className="size-5" /></span>
+                  <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Latest reading · demo stream</p><p className="mt-1 text-xs text-slate-500">{latestMeasurement ? `${latestMeasurement.characteristic} · ${latestMeasurement.instrumentId} · ${formatTimestamp(latestMeasurement.timestamp)}` : "No measurement available"}</p></div>
+                </div>
+                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold ${streaming ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
+                  <span className={`size-2 rounded-full ${streaming ? "animate-pulse bg-emerald-500" : "bg-slate-400"}`} />
+                  {streaming ? "SIMULATED · RUNNING" : "SIMULATED · PAUSED"}
+                </span>
+              </div>
+              <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.5fr)]">
+                <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/70">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Most recent value</p>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <p className="font-mono text-4xl font-semibold tabular-nums text-slate-950 dark:text-white">{latestMeasurement?.value?.toFixed(3) ?? "—"}</p>
+                    <span className="text-sm font-semibold text-slate-500">{latestMeasurement?.unit ?? "unit"}</span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <StatusPill status={latestMeasurement?.status ?? "No data"} />
+                    <span className="text-[11px] text-slate-500">{latestPart ? `LSL ${latestPart.lsl} · Nominal ${latestPart.nominal} · USL ${latestPart.usl} ${latestPart.unit}` : "No specification available"}</span>
+                  </div>
+                  <p className="mt-3 text-[10px] text-slate-400">Instrument connection is simulated; no physical hardware is connected.</p>
+                </div>
+                <div className="min-w-0">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-slate-800 dark:text-slate-100">Recent readings</p><p className="text-[10px] text-slate-500">{latestPart?.characteristic ?? "Selected filters"} · limits shown separately</p></div>
+                  <div className="h-36 w-full">
+                    {liveValues.length ? (
+                      <svg aria-label="Recent measurement trend with specification limits" className="size-full overflow-visible" preserveAspectRatio="none" role="img" viewBox="0 0 700 150">
+                        {latestPart && <><line x1="24" x2="676" y1={liveY(latestPart.usl)} y2={liveY(latestPart.usl)} stroke="#ef4444" strokeDasharray="5 4" /><line x1="24" x2="676" y1={liveY(latestPart.nominal)} y2={liveY(latestPart.nominal)} stroke="#2563eb" strokeDasharray="4 4" /><line x1="24" x2="676" y1={liveY(latestPart.lsl)} y2={liveY(latestPart.lsl)} stroke="#ef4444" strokeDasharray="5 4" /></>}
+                        {liveValues.length > 1 && <polyline fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={liveChartPoints} />}
+                        {liveValues.map((value, index) => <circle key={livePoints[index].id} cx={liveX(index)} cy={liveY(value)} r="3" fill={latestPart && (value < latestPart.lsl || value > latestPart.usl) ? "#e11d48" : "#2563eb"} />)}
+                      </svg>
+                    ) : <div className="grid h-full place-items-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-500 dark:border-slate-700">No numeric readings match these filters.</div>}
+                  </div>
+                  {latestPart && <div className="mt-2 flex flex-wrap gap-4 text-[10px] text-slate-500"><span><i className="mr-1 inline-block w-4 border-t border-dashed border-rose-500" />LSL / USL</span><span><i className="mr-1 inline-block w-4 border-t border-dashed border-blue-600" />Nominal</span></div>}
+                </div>
+              </div>
+            </section>
+          )}
           <section className={cardClass}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -638,6 +837,15 @@ export function WorkspaceModule({
           <section className={cardClass}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-semibold text-slate-900 dark:text-white">Instruments</h2>
+              <div className="flex flex-wrap gap-2">
+                <label className="relative">
+                  <IconSearch aria-hidden="true" className="absolute left-3 top-3 size-4 text-slate-400" />
+                  <input aria-label="Search instruments" className={`${inputClass} w-52 pl-9`} onChange={(event) => setInstrumentSearch(event.target.value)} placeholder="Search devices…" value={instrumentSearch} />
+                </label>
+                <select aria-label="Filter instruments by status" className={`${inputClass} w-auto min-w-28`} onChange={(event) => setInstrumentStatusFilter(event.target.value)} value={instrumentStatusFilter}>
+                  <option>All</option><option>Online</option><option>Offline</option>
+                </select>
+              </div>
               <form className="flex flex-wrap gap-2" onSubmit={addInstrument}>
                 <input aria-label="New instrument name" className={`${inputClass} w-44`} onChange={(event) => setInstrumentDraft({ ...instrumentDraft, name: event.target.value })} placeholder="Instrument name" value={instrumentDraft.name} />
                 <input aria-label="New instrument model" className={`${inputClass} w-36`} onChange={(event) => setInstrumentDraft({ ...instrumentDraft, model: event.target.value })} placeholder="Model" value={instrumentDraft.model} />
@@ -646,14 +854,21 @@ export function WorkspaceModule({
             </div>
             <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-xs">
               <thead className="border-b border-slate-200 text-[10px] uppercase tracking-wide text-slate-500 dark:border-slate-800"><tr>{["Instrument", "Type / model", "Line", "Gateway", "Calibration due", "Status", "Action"].map((name) => <th key={name} className="px-3 py-3 font-semibold">{name}</th>)}</tr></thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">{data.instruments.map((item) => <tr key={item.id}>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">{matchingInstruments.map((item) => <tr key={item.id}>
                 <td className="px-3 py-3"><span className="block font-semibold text-slate-800 dark:text-slate-100">{item.name}</span><span className="text-slate-500">{item.id} · {item.manufacturer}</span></td>
                 <td className="px-3 py-3 text-slate-700 dark:text-slate-300">{item.type}<span className="block text-slate-500">{item.model} · FW {item.firmware}</span></td>
                 <td className="px-3 py-3 text-slate-700 dark:text-slate-300">{item.line}</td><td className="px-3 py-3 text-slate-700 dark:text-slate-300">{item.gatewayId}</td>
-                <td className="px-3 py-3 text-slate-700 dark:text-slate-300">{item.calibrationDue}</td><td className="px-3 py-3"><StatusPill status={item.online ? "Online" : "Offline"} /></td>
-                <td className="px-3 py-3"><button className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200" onClick={() => toggleInstrument(item.id)} type="button">{item.online ? "Simulate offline" : "Simulate reconnect"}</button></td>
+                <td className="px-3 py-3 text-slate-700 dark:text-slate-300">{item.calibrationDue}{item.calibrationDue !== "Not configured" && item.calibrationDue < new Date().toISOString().slice(0, 10) && <span className="mt-1 block text-[10px] font-semibold text-rose-600">Calibration overdue</span>}</td><td className="px-3 py-3"><StatusPill status={item.online ? "Online" : "Offline"} /></td>
+                <td className="px-3 py-3"><div className="flex items-center gap-2"><button aria-expanded={expandedInstrument === item.id} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50 dark:border-slate-700 dark:text-blue-300 dark:hover:bg-slate-800" onClick={() => setExpandedInstrument(expandedInstrument === item.id ? "" : item.id)} type="button">{expandedInstrument === item.id ? "Hide details" : "Details"}</button><button className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200" onClick={() => toggleInstrument(item.id)} type="button">{item.online ? "Simulate offline" : "Simulate reconnect"}</button></div></td>
               </tr>)}</tbody>
             </table></div>
+            {!matchingInstruments.length && <EmptyState message="No instruments match the selected search and status filter." />}
+            {expandedInstrument && data.instruments.filter((item) => item.id === expandedInstrument).map((item) => (
+              <aside aria-label={`${item.name} device details`} className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900 dark:bg-blue-950/30" key={item.id}>
+                <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-slate-900 dark:text-white">{item.name} · {item.id}</h3><p className="mt-1 text-xs text-slate-500">{item.manufacturer} {item.model} · {item.type}</p></div><StatusPill status={item.online ? "Online" : "Offline"} /></div>
+                <div className="mt-3 grid gap-3 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-4"><span>Production line <b className="mt-1 block text-slate-900 dark:text-white">{item.line}</b></span><span>Gateway <b className="mt-1 block text-slate-900 dark:text-white">{item.gatewayId}</b></span><span>Last communication <b className="mt-1 block text-slate-900 dark:text-white">{formatTimestamp(item.lastSeen)}</b></span><span>Calibration due <b className="mt-1 block text-slate-900 dark:text-white">{item.calibrationDue}</b></span></div>
+              </aside>
+            ))}
           </section>
           <section className={cardClass}>
             <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Calibration and device records</h2>
@@ -666,11 +881,19 @@ export function WorkspaceModule({
         </div>
       ));
     case "spc-analytics": {
-      const part = data.parts[0];
+      const part = data.parts.find((item) => item.number === spcPartNumber) ?? data.parts[0];
       const values = data.measurements
         .filter((item) => item.partNumber === part?.number && item.value !== null)
+        .sort((left, right) => left.timestamp.localeCompare(right.timestamp))
         .map((item) => item.value as number);
       const stats = calculateStatistics(values);
+      const sortedValues = [...values].sort((left, right) => left - right);
+      const median = sortedValues.length
+        ? sortedValues.length % 2
+          ? sortedValues[(sortedValues.length - 1) / 2]
+          : (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
+        : null;
+      const movingRanges = values.slice(1).map((value, index) => Math.abs(value - values[index]));
       const cp = stats && part && stats.standardDeviation > 0
         ? (part.usl - part.lsl) / (6 * stats.standardDeviation)
         : null;
@@ -678,9 +901,8 @@ export function WorkspaceModule({
         ? Math.min(part.usl - stats.mean, stats.mean - part.lsl) / (3 * stats.standardDeviation)
         : null;
       const movingRangeMean =
-        values.length > 1
-          ? values.slice(1).reduce((sum, value, index) => sum + Math.abs(value - values[index]), 0) /
-            (values.length - 1)
+        movingRanges.length
+          ? movingRanges.reduce((sum, value) => sum + value, 0) / movingRanges.length
           : 0;
       const ucl = stats && values.length > 1 ? stats.mean + 2.66 * movingRangeMean : null;
       const lcl = stats && values.length > 1 ? stats.mean - 2.66 * movingRangeMean : null;
@@ -701,9 +923,9 @@ export function WorkspaceModule({
         ).length;
       });
       const histogramMax = Math.max(...histogram, 1);
-      return shell("SPC Analytics", "Individuals chart and capability summary for P001 Width. Capability is calculated only with specification limits and at least 30 valid observations.", (
+      return shell("SPC Analytics", "Individuals and moving-range charts, statistics, and capability estimates for a selected part. Capability is calculated only with specification limits and at least 30 valid observations.", (
         <div className="space-y-4">
-          <section className={cardClass}><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold text-slate-900 dark:text-white">P001 · Width · Individuals chart</h2><p className="text-xs text-slate-500 dark:text-slate-400">mm · n={points.length} latest observations · illustrative demo analysis</p></div><span className="text-xs text-slate-500">Specification limits ≠ control limits</span></div>
+          <section className={cardClass}><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold text-slate-900 dark:text-white">{part ? `${part.number} · ${part.characteristic} · Individuals chart` : "Individuals chart"}</h2><p className="text-xs text-slate-500 dark:text-slate-400">{part?.unit ?? "unit"} · n={points.length} latest observations · illustrative demo analysis</p></div><label className="text-xs font-medium text-slate-500">Part<select aria-label="SPC analysis part" className={`${inputClass} mt-1 min-w-32`} onChange={(event) => setSpcPartNumber(event.target.value)} value={part?.number ?? ""}>{data.parts.map((candidate) => <option key={candidate.number} value={candidate.number}>{candidate.number} · {candidate.name}</option>)}</select></label><span className="text-xs text-slate-500">Specification limits ≠ control limits</span></div>
             <div className="mt-4 overflow-x-auto"><svg aria-label="Individuals control chart with specification boundaries" className="min-w-[700px]" role="img" viewBox="0 0 760 210">
               {ucl !== null && <line x1="42" x2="735" y1={y(ucl)} y2={y(ucl)} stroke="#8b5cf6" strokeDasharray="3 4" />}
               {lcl !== null && <line x1="42" x2="735" y1={y(lcl)} y2={y(lcl)} stroke="#8b5cf6" strokeDasharray="3 4" />}
@@ -715,13 +937,24 @@ export function WorkspaceModule({
               {points.map((value, index) => <circle key={index} cx={x(index)} cy={y(value)} r="3.2" fill={value < (part?.lsl ?? -Infinity) || value > (part?.usl ?? Infinity) ? "#dc2626" : value < (lcl ?? -Infinity) || value > (ucl ?? Infinity) ? "#8b5cf6" : "#2563eb"} />)}
               <line x1="42" x2="735" y1="180" y2="180" stroke="#cbd5e1" /><text x="42" y="199" fill="#64748b" fontSize="10">Earlier observations</text><text x="680" y="199" fill="#64748b" fontSize="10">Latest</text>
             </svg></div>
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500"><span><i className="mr-1 inline-block w-4 border-t border-dashed border-rose-500" />LSL / USL · specification</span><span><i className="mr-1 inline-block w-4 border-t border-dashed border-violet-500" />LCL / UCL · control</span><span><i className="mr-1 inline-block w-4 border-t border-dashed border-blue-600" />Nominal</span></div>
           </section>
-          <section className={cardClass}><div className="mb-4"><h2 className="font-semibold text-slate-900 dark:text-white">Measurement distribution</h2><p className="text-xs text-slate-500 dark:text-slate-400">Histogram of {values.length} valid P001 readings · fixed-width bins</p></div><div className="flex h-32 items-end gap-2">{histogram.map((count, index) => <div key={index} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><span className="text-[10px] text-slate-500">{count || ""}</span><div className="w-full rounded-t bg-violet-500/80" style={{ height: `${Math.max((count / histogramMax) * 82, 2)}%` }} /></div>)}</div><div className="mt-2 flex justify-between text-[10px] text-slate-400"><span>{minAxis.toFixed(2)} mm</span><span>{maxAxis.toFixed(2)} mm</span></div></section>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <section className={cardClass}><div className="mb-3"><h2 className="font-semibold text-slate-900 dark:text-white">Moving range chart</h2><p className="text-xs text-slate-500 dark:text-slate-400">Absolute difference between consecutive readings · MR̄={movingRangeMean.toFixed(4)} {part?.unit ?? ""}</p></div>
+            {movingRanges.length ? <svg aria-label="Moving range chart of consecutive reading differences" className="h-40 w-full overflow-visible" preserveAspectRatio="none" role="img" viewBox="0 0 760 170">
+             {[24, 64, 104, 144].map((yPosition) => <line key={yPosition} x1="42" x2="735" y1={yPosition} y2={yPosition} stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="3 5" />)}
+             <line x1="42" x2="735" y1={144 - (movingRangeMean / Math.max(...movingRanges, movingRangeMean, 0.001)) * 120} y2={144 - (movingRangeMean / Math.max(...movingRanges, movingRangeMean, 0.001)) * 120} stroke="#2563eb" strokeDasharray="4 4" />
+             {movingRanges.length > 1 && <polyline fill="none" stroke="#8b5cf6" strokeWidth="2" points={movingRanges.slice(-40).map((value, index, shown) => `${42 + index / Math.max(shown.length - 1, 1) * 693},${144 - value / Math.max(...movingRanges, 0.001) * 120}`).join(" ")} />}
+             {movingRanges.slice(-40).map((value, index, shown) => <circle aria-label={`Moving range ${index + 1}: ${value.toFixed(4)}`} key={index} cx={42 + index / Math.max(shown.length - 1, 1) * 693} cy={144 - value / Math.max(...movingRanges, 0.001) * 120} r="3" fill={value > 3.267 * movingRangeMean ? "#e11d48" : "#8b5cf6"} />)}
+             <text x="4" y={144 - (movingRangeMean / Math.max(...movingRanges, movingRangeMean, 0.001)) * 120 - 4} fill="#2563eb" fontSize="10">MR̄</text>
+            </svg> : <EmptyState message="At least two valid readings are needed to calculate moving ranges." />}
+          </section>
+          <section className={cardClass}><div className="mb-4"><h2 className="font-semibold text-slate-900 dark:text-white">Measurement distribution</h2><p className="text-xs text-slate-500 dark:text-slate-400">Histogram of {values.length} valid {part?.number ?? "part"} readings · fixed-width bins</p></div><div className="flex h-32 items-end gap-2">{histogram.map((count, index) => <div key={index} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><span className="text-[10px] text-slate-500">{count || ""}</span><div className="w-full rounded-t bg-violet-500/80" style={{ height: `${Math.max((count / histogramMax) * 82, 2)}%` }} /></div>)}</div><div className="mt-2 flex justify-between text-[10px] text-slate-400"><span>{minAxis.toFixed(2)} {part?.unit ?? ""}</span><span>{maxAxis.toFixed(2)} {part?.unit ?? ""}</span></div></section>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             <Metric label="Sample count" value={stats?.count ?? 0} detail="Valid observations" icon={<IconDatabase className="size-5" />} />
-            <Metric label="Mean" value={stats?.mean.toFixed(3) ?? "—"} detail="mm" icon={<IconActivity className="size-5" />} />
+            <Metric label="Mean" value={stats?.mean.toFixed(3) ?? "—"} detail={part?.unit ?? "unit"} icon={<IconActivity className="size-5" />} />
+            <Metric label="Median" value={median?.toFixed(3) ?? "—"} detail={part?.unit ?? "unit"} icon={<IconChartBar className="size-5" />} />
             <Metric label="Std. deviation" value={stats?.standardDeviation.toFixed(4) ?? "—"} detail="Sample standard deviation" icon={<IconGauge className="size-5" />} />
-            <Metric label="Cp / Cpk" value={stats && stats.count >= 30 && cp !== null && cpk !== null ? `${cp.toFixed(2)} / ${cpk.toFixed(2)}` : "Insufficient data"} detail={stats && stats.count < 30 ? "Requires ≥30 valid observations" : "Using P001 specification limits"} icon={<IconCircleCheck className="size-5" />} />
+            <Metric label="Cp / Cpk" value={stats && stats.count >= 30 && cp !== null && cpk !== null ? `${cp.toFixed(2)} / ${cpk.toFixed(2)}` : "Insufficient data"} detail={stats && stats.count < 30 ? "Requires ≥30 valid observations" : `Using ${part?.number ?? "part"} specifications`} icon={<IconCircleCheck className="size-5" />} />
           </div>
           <section className={cardClass}><h2 className="font-semibold text-slate-900 dark:text-white">Calculation method</h2><p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Individuals use the sample mean and sample standard deviation (n − 1). Cp = (USL − LSL) / 6s; Cpk = min(USL − mean, mean − LSL) / 3s. Values are informational for this demo and are not a validated production study. No control limits are presented as specification limits.</p></section>
         </div>
@@ -741,11 +974,45 @@ export function WorkspaceModule({
       return shell("Part and Inspection Setup", "Maintain part revisions and characteristic specifications. Existing measurement records retain their historical values.", (
         <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <section className={cardClass}><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Part catalogue · active revision</h2><div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-xs"><thead className="border-b border-slate-200 text-[10px] uppercase text-slate-500 dark:border-slate-800"><tr>{["Part", "Revision", "Characteristic", "Nominal", "LSL", "USL", "Status"].map((x) => <th key={x} className="px-2 py-3 font-semibold">{x}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{data.parts.map((part) => <tr key={part.number}><td className="px-2 py-3"><b className="text-slate-800 dark:text-slate-100">{part.number}</b><span className="block text-slate-500">{part.name}</span></td><td className="px-2 py-3 text-slate-700 dark:text-slate-300">{part.revision}</td><td className="px-2 py-3 text-slate-700 dark:text-slate-300">{part.characteristic}</td><td className="px-2 py-3 font-mono">{part.nominal} {part.unit}</td><td className="px-2 py-3 font-mono">{part.lsl}</td><td className="px-2 py-3 font-mono">{part.usl}</td><td className="px-2 py-3"><StatusPill status={part.active ? "Active" : "Inactive"} /></td></tr>)}</tbody></table></div><p className="mt-3 text-xs text-slate-500">Inspection plans and immutable historical revisions require a backend before multi-user production use.</p></section>
-          <section className={cardClass}><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Add a demo part</h2><form className="space-y-3" onSubmit={addPart}><div className="grid grid-cols-2 gap-2"><input aria-label="Part number" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, number: e.target.value })} placeholder="Part number" value={partDraft.number} /><input aria-label="Part name" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, name: e.target.value })} placeholder="Name" value={partDraft.name} /></div><input aria-label="Characteristic name" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, characteristic: e.target.value })} placeholder="Characteristic" value={partDraft.characteristic} /><div className="grid grid-cols-3 gap-2"><input aria-label="Nominal value" className={inputClass} min="0" onChange={(e) => setPartDraft({ ...partDraft, nominal: e.target.value })} placeholder="Nominal" step="any" type="number" value={partDraft.nominal} /><input aria-label="Lower specification limit" className={inputClass} min="0" onChange={(e) => setPartDraft({ ...partDraft, lsl: e.target.value })} placeholder="LSL" step="any" type="number" value={partDraft.lsl} /><input aria-label="Upper specification limit" className={inputClass} min="0" onChange={(e) => setPartDraft({ ...partDraft, usl: e.target.value })} placeholder="USL" step="any" type="number" value={partDraft.usl} /></div><p className="text-[11px] text-slate-500">Limits are validated: LSL ≤ nominal ≤ USL. Demo unit: mm.</p><button className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800" type="submit"><IconPlus className="size-4" /> Add part</button></form></section>
+          <section className={cardClass}><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Add a demo part</h2><form className="space-y-3" onSubmit={addPart}><div className="grid grid-cols-2 gap-2"><input aria-label="Part number" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, number: e.target.value })} placeholder="Part number" value={partDraft.number} /><input aria-label="Part name" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, name: e.target.value })} placeholder="Name" value={partDraft.name} /></div><input aria-label="Characteristic name" className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, characteristic: e.target.value })} placeholder="Characteristic" value={partDraft.characteristic} /><label className="block text-xs font-medium text-slate-500">Measurement unit<select aria-label="Measurement unit" className={`${inputClass} mt-1`} onChange={(e) => setPartDraft({ ...partDraft, unit: e.target.value })} value={partDraft.unit}>{["mm", "cm", "m", "in", "°C", "°F", "N", "kg"].map((unit) => <option key={unit}>{unit}</option>)}</select></label><div className="grid grid-cols-3 gap-2"><input aria-label={`Nominal value (${partDraft.unit})`} className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, nominal: e.target.value })} placeholder="Nominal" step="any" type="number" value={partDraft.nominal} /><input aria-label={`Lower specification limit (${partDraft.unit})`} className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, lsl: e.target.value })} placeholder="LSL" step="any" type="number" value={partDraft.lsl} /><input aria-label={`Upper specification limit (${partDraft.unit})`} className={inputClass} onChange={(e) => setPartDraft({ ...partDraft, usl: e.target.value })} placeholder="USL" step="any" type="number" value={partDraft.usl} /></div><p className="text-[11px] text-slate-500">Limits are validated: LSL ≤ nominal ≤ USL. Units are recorded with the part specification.</p><button className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800" type="submit"><IconPlus className="size-4" /> Add part</button></form></section>
         </div>
       ));
     case "alerts-quality-events":
       return shell("Alerts and Quality Events", "Track measurement-related demo events. Status, assignment, and investigation notes are saved with the local demo workspace.", (
+        <div className="space-y-4">
+        <section className={cardClass}>
+          <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Create quality event</h2>
+          <form className="grid gap-3 md:grid-cols-2" onSubmit={(formEvent) => {
+            formEvent.preventDefault();
+            const description = eventDraft.description.trim();
+            if (!description) {
+              setNotice("Enter a description before creating the quality event.");
+              return;
+            }
+            const qualityEvent: QualityEvent = {
+              id: `QE-${Date.now()}`,
+              type: "Quality event",
+              severity: eventDraft.severity,
+              description,
+              timestamp: new Date().toISOString(),
+              source: eventDraft.source || "Manual entry",
+              measurementId: "",
+              status: "Open",
+              assignedTo: "Unassigned",
+              notes: "",
+              rootCause: "",
+              correctiveActions: [],
+            };
+            setData((current) => ({ ...current, events: [qualityEvent, ...current.events] }));
+            setEventDraft({ description: "", severity: "Medium", source: "" });
+            setNotice(`${qualityEvent.id} was created in the local demo workspace.`);
+          }}>
+            <label className="text-xs font-medium text-slate-500 md:col-span-2">Description<textarea aria-label="New event description" className={`${inputClass} mt-1 min-h-16 py-2`} onChange={(event) => setEventDraft({ ...eventDraft, description: event.target.value })} placeholder="Describe the quality concern…" value={eventDraft.description} /></label>
+            <label className="text-xs font-medium text-slate-500">Severity<select aria-label="New event severity" className={`${inputClass} mt-1`} onChange={(event) => setEventDraft({ ...eventDraft, severity: event.target.value as QualityEvent["severity"] })} value={eventDraft.severity}>{["Critical", "High", "Medium", "Low"].map((severity) => <option key={severity}>{severity}</option>)}</select></label>
+            <label className="text-xs font-medium text-slate-500">Source instrument (optional)<select aria-label="Event source instrument" className={`${inputClass} mt-1`} onChange={(event) => setEventDraft({ ...eventDraft, source: event.target.value })} value={eventDraft.source}><option value="">Manual entry</option>{data.instruments.map((instrument) => <option key={instrument.id} value={instrument.id}>{instrument.name} · {instrument.id}</option>)}</select></label>
+            <div className="md:col-span-2"><button className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800" type="submit"><IconPlus className="size-4" /> Create event</button></div>
+          </form>
+        </section>
         <section className={cardClass}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold text-slate-900 dark:text-white">{openEvents} active events</h2>
@@ -767,7 +1034,10 @@ export function WorkspaceModule({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {["Acknowledged", "Investigating", "Resolved"].map((status) => (
-                        <button key={status} disabled={item.status === "Resolved"} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200" onClick={() => setData((current) => ({ ...current, events: current.events.map((event) => event.id === item.id ? { ...event, status: status as typeof event.status, assignedTo: event.assignedTo === "Unassigned" ? "A. Patel" : event.assignedTo } : event) }))} type="button">{status}</button>
+                        <button key={status} disabled={item.status === "Resolved"} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200" onClick={() => {
+                          if (status === "Resolved" && !window.confirm(`Resolve ${item.id}? Confirm investigation and corrective actions are complete.`)) return;
+                          setData((current) => ({ ...current, events: current.events.map((event) => event.id === item.id ? { ...event, status: status as typeof event.status, assignedTo: event.assignedTo === "Unassigned" ? "A. Patel" : event.assignedTo } : event) }));
+                        }} type="button">{status}</button>
                       ))}
                     </div>
                   </div>
@@ -806,13 +1076,32 @@ export function WorkspaceModule({
                             );
                             setData((current) => ({
                               ...current,
-                              events: current.events.map((record) =>
-                                record.id === item.id ? { ...record, notes: note } : record,
-                              ),
+                              events: current.events.map((record) => {
+                                if (record.id !== item.id) return record;
+                                const actions = (eventActionDrafts[item.id] ?? (record.correctiveActions ?? []).join("\n"))
+                                  .split("\n")
+                                  .map((action) => action.trim())
+                                  .filter(Boolean);
+                                return {
+                                  ...record,
+                                  notes: note,
+                                  rootCause: (eventRootDrafts[item.id] ?? record.rootCause ?? "").trim(),
+                                  correctiveActions: actions,
+                                  correctiveActionCompleted: actions.map((_, index) => record.correctiveActions?.[index] === actions[index] ? (record.correctiveActionCompleted?.[index] ?? false) : false),
+                                };
+                              }),
                             }));
                             setEventNoteDrafts((drafts) => ({
                               ...drafts,
                               [item.id]: note,
+                            }));
+                            setEventActionDrafts((drafts) => ({
+                              ...drafts,
+                              [item.id]: (eventActionDrafts[item.id] ?? (item.correctiveActions ?? []).join("\n"))
+                                .split("\n")
+                                .map((action) => action.trim())
+                                .filter(Boolean)
+                                .join("\n"),
                             }));
                           }}
                           successLabel="Saved locally"
@@ -822,17 +1111,53 @@ export function WorkspaceModule({
                       </div>
                     </div>
                   </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="text-xs font-medium text-slate-500">Root cause
+                      <textarea aria-label={`Root cause for ${item.id}`} className={`${inputClass} mt-1 min-h-16 py-2`} onChange={(event) => setEventRootDrafts((drafts) => ({ ...drafts, [item.id]: event.target.value }))} placeholder="Document the identified cause…" value={eventRootDrafts[item.id] ?? item.rootCause ?? ""} />
+                    </label>
+                    <label className="text-xs font-medium text-slate-500">Corrective actions · one per line
+                      <textarea aria-label={`Corrective actions for ${item.id}`} className={`${inputClass} mt-1 min-h-16 py-2`} onChange={(event) => setEventActionDrafts((drafts) => ({ ...drafts, [item.id]: event.target.value }))} placeholder={"Contain affected product\nCorrect process cause\nVerify effectiveness"} value={eventActionDrafts[item.id] ?? (item.correctiveActions ?? []).join("\n")} />
+                    </label>
+                  </div>
+                  {(item.correctiveActions?.length ?? 0) > 0 && <ul aria-label={`Corrective action checklist for ${item.id}`} className="mt-2 space-y-1">{item.correctiveActions?.map((action, index) => <li className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300" key={`${index}-${action}`}><input aria-label={`Action ${index + 1} complete for ${item.id}`} checked={item.correctiveActionCompleted?.[index] ?? false} onChange={(event) => setData((current) => ({ ...current, events: current.events.map((record) => record.id === item.id ? { ...record, correctiveActionCompleted: (record.correctiveActions ?? []).map((_, actionIndex) => actionIndex === index ? event.target.checked : (record.correctiveActionCompleted?.[actionIndex] ?? false)) } : record) }))} type="checkbox" /><span className={item.correctiveActionCompleted?.[index] ? "line-through opacity-60" : ""}>{action}</span></li>)}</ul>}
                 </article>
               ))}
             </div>
           ) : <EmptyState message="No quality events have been generated." />}
         </section>
+        </div>
       ));
     case "traceability":
       return shell("Traceability", "Search by part, batch, serial, or measurement ID to inspect connected production and quality records.", (
         <div className="space-y-4">
-          <form className={`${cardClass} flex flex-col gap-2 sm:flex-row`} onSubmit={(event) => { event.preventDefault(); setTraceSearched(true); }}><label className="relative flex-1"><IconSearch aria-hidden="true" className="absolute left-3 top-3 size-4 text-slate-400" /><input aria-label="Part, serial, batch, or measurement ID" className={`${inputClass} pl-9`} onChange={(event) => setTraceQuery(event.target.value)} placeholder="Part, batch, serial or measurement ID" value={traceQuery} /></label><button className="min-h-10 rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800" type="submit">Search records</button><button className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => { setTraceQuery(""); setTraceSearched(false); }} type="button">Clear</button></form>
-          {traceSearched && <section className={cardClass}>{traceRecords.length ? <><h2 className="mb-3 font-semibold text-slate-900 dark:text-white">{traceRecords.length} matching measurement records</h2><div className="space-y-3">{traceRecords.slice(0, 30).map((item) => { const part = partByNumber.get(item.partNumber); const instrument = data.instruments.find((device) => device.id === item.instrumentId); const event = data.events.find((qualityEvent) => qualityEvent.measurementId === item.id); return <article key={item.id} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800"><div className="flex flex-wrap items-center justify-between gap-2"><b className="text-sm text-slate-900 dark:text-white">{item.id} · {item.partNumber} · {item.serialNumber}</b><StatusPill status={item.status} /></div><div className="mt-3 grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-4"><span>Batch: <b>{item.batchId}</b></span><span>Characteristic: <b>{item.characteristic}</b></span><span>Value: <b>{item.value ?? "INVALID"} {item.unit}</b></span><span>Spec: <b>{part ? `${part.lsl}–${part.usl} ${part.unit}` : "—"}</b></span><span>Part revision: <b>{part?.revision ?? "—"}</b></span><span>Instrument: <b>{instrument?.name ?? item.instrumentId}</b></span><span>Gateway: <b>{instrument?.gatewayId ?? "—"}</b></span><span>Operator: <b>{item.operator}</b></span></div><p className="mt-2 text-[11px] text-slate-500">{formatTimestamp(item.timestamp)}{event ? ` · Related event ${event.id}` : ""}</p></article>; })}</div></> : <EmptyState message="No records found. Try a part number (P001), batch ID, serial or measurement ID." />}</section>}
+          <form className={`${cardClass} grid gap-3 sm:grid-cols-2 xl:grid-cols-5`} onSubmit={(event) => { event.preventDefault(); setTraceSearched(true); }}>
+            <label className="relative xl:col-span-2"><IconSearch aria-hidden="true" className="absolute left-3 top-3 size-4 text-slate-400" /><input aria-label="Part, serial, batch, or measurement ID" className={`${inputClass} pl-9`} onChange={(event) => setTraceQuery(event.target.value)} placeholder="Part, batch, serial or measurement ID" value={traceQuery} /></label>
+            <label className="text-xs font-medium text-slate-500">Part<select aria-label="Traceability part filter" className={`${inputClass} mt-1`} onChange={(event) => setTracePart(event.target.value)} value={tracePart}><option value="All">All parts</option>{data.parts.map((part) => <option key={part.number} value={part.number}>{part.number}</option>)}</select></label>
+            <label className="text-xs font-medium text-slate-500">From date<input aria-label="Traceability start date" className={`${inputClass} mt-1`} onChange={(event) => setTraceStart(event.target.value)} type="date" value={traceStart} /></label>
+            <label className="text-xs font-medium text-slate-500">To date<input aria-label="Traceability end date" className={`${inputClass} mt-1`} onChange={(event) => setTraceEnd(event.target.value)} type="date" value={traceEnd} /></label>
+            <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-5">
+              <button className="min-h-10 rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white hover:bg-blue-800" type="submit">Search records</button>
+              <button className="min-h-10 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => { setTraceQuery(""); setTracePart("All"); setTraceStart(""); setTraceEnd(""); setTraceSearched(false); setExpandedTraceId(""); }} type="button">Clear filters</button>
+              <button className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => { if (!downloadCsv("gap-it-traceability.csv", traceRecords.map((item) => ({ timestamp: item.timestamp, measurementId: item.id, partNumber: item.partNumber, batchId: item.batchId, serialNumber: item.serialNumber, characteristic: item.characteristic, value: item.value, unit: item.unit, instrumentId: item.instrumentId, operator: item.operator, status: item.status })))) setNotice("Search traceability records before exporting."); }} type="button"><IconDownload className="size-4" /> Export CSV</button>
+            </div>
+          </form>
+          {traceSearched && <section className={cardClass}>
+            {traceRecords.length ? <>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold text-slate-900 dark:text-white">{traceRecords.length} matching measurement records</h2><span className="text-xs text-slate-500">Select a row to view its trace details</span></div>
+              <div className="space-y-2">{traceRecords.slice(0, 100).map((item) => {
+                const part = partByNumber.get(item.partNumber);
+                const instrument = data.instruments.find((device) => device.id === item.instrumentId);
+                const event = data.events.find((qualityEvent) => qualityEvent.measurementId === item.id);
+                const expanded = expandedTraceId === item.id;
+                return <article key={item.id} className="rounded-xl border border-slate-200 dark:border-slate-800">
+                  <button aria-expanded={expanded} className="flex min-h-14 w-full flex-wrap items-center justify-between gap-2 p-4 text-left" onClick={() => setExpandedTraceId(expanded ? "" : item.id)} type="button">
+                    <span><b className="text-sm text-slate-900 dark:text-white">{item.id} · {item.partNumber} · {item.serialNumber}</b><span className="ml-3 text-xs text-slate-500">{formatTimestamp(item.timestamp)}</span></span><span className="flex items-center gap-3"><span className="font-mono text-xs text-slate-700 dark:text-slate-300">{item.value ?? "INVALID"} {item.unit}</span><StatusPill status={item.status} /></span>
+                  </button>
+                  {expanded && <div className="border-t border-slate-100 px-4 py-3 dark:border-slate-800"><div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2 lg:grid-cols-4"><span>Batch: <b>{item.batchId}</b></span><span>Characteristic: <b>{item.characteristic}</b></span><span>Specification: <b>{part ? `${part.lsl}–${part.usl} ${part.unit}` : "—"}</b></span><span>Part revision: <b>{part?.revision ?? "—"}</b></span><span>Instrument: <b>{instrument?.name ?? item.instrumentId}</b></span><span>Gateway: <b>{instrument?.gatewayId ?? "—"}</b></span><span>Operator: <b>{item.operator}</b></span><span>Quality event: <b>{event?.id ?? "None"}</b></span></div></div>}
+                </article>;
+              })}</div>
+            </> : <EmptyState message="No records found. Try a part number, batch ID, serial number, measurement ID, or a wider date range." />}
+          </section>}
         </div>
       ));
     case "users-permissions":

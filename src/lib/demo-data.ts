@@ -62,6 +62,9 @@ export type QualityEvent = {
   status: "Open" | "Acknowledged" | "Investigating" | "Resolved";
   assignedTo: string;
   notes: string;
+  rootCause?: string;
+  correctiveActions?: string[];
+  correctiveActionCompleted?: boolean[];
 };
 
 export type DemoUser = {

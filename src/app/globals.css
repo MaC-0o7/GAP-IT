@@ -53,45 +53,8 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.gooey-input__blob {
-  position: absolute;
-  width: 42%;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #2563eb, #0f9d8a);
-  opacity: 0.85;
-}
-
-.gooey-input__blob--one {
-  left: 8%;
-  top: -85%;
-  animation: gooey-drift-one 4s ease-in-out infinite alternate;
-}
-
-.gooey-input__blob--two {
-  right: 8%;
-  bottom: -85%;
-  animation: gooey-drift-two 4.6s ease-in-out infinite alternate;
-}
-
-@keyframes gooey-drift-one {
-  to {
-    transform: translate(55%, 45%) scale(0.86);
-  }
-}
-
-@keyframes gooey-drift-two {
-  to {
-    transform: translate(-55%, -45%) scale(0.86);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   button {
     transition-duration: 0ms;
-  }
-
-  .gooey-input__blob {
-    animation: none;
   }
 }

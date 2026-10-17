@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   IconActivity,
   IconBell,
@@ -11,6 +12,7 @@ import {
   IconFileReport,
   IconHistory,
   IconLayoutDashboard,
+  IconMenu2,
   IconMoon,
   IconRoute,
   IconSearch,
@@ -18,6 +20,7 @@ import {
   IconSettingsAutomation,
   IconSun,
   IconUsers,
+  IconX,
 } from "@tabler/icons-react";
 import { createDemoData, type DemoData } from "@/lib/demo-data";
 import { WorkspaceModule } from "@/components/workspace-module";
@@ -386,11 +389,21 @@ export default function Home() {
             </span>
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
-            <div className="relative">
+            <div
+              className="relative flex items-center gap-2"
+              onBlur={(event) => {
+                if (
+                  !(event.relatedTarget instanceof Node) ||
+                  !event.currentTarget.contains(event.relatedTarget)
+                ) {
+                  window.setTimeout(() => setSearchOpen(false), 150);
+                }
+              }}
+            >
               <button
                 aria-label="Search modules"
                 aria-expanded={searchOpen}
-                aria-controls="workspace-search-popover"
+                aria-controls="workspace-search"
                 className="grid size-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                 onClick={() => setSearchOpen((open) => !open)}
                 title="Search modules ( / )"
@@ -400,71 +413,55 @@ export default function Home() {
               </button>
               {searchOpen && (
                 <div
-                  className="absolute right-0 top-full z-50 w-[min(20rem,calc(100vw-2rem))] pt-2"
-                  id="workspace-search-popover"
+                  className="relative w-[min(18rem,35vw)]"
                 >
-                  <div
-                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
-                    onBlur={(event) => {
-                      if (
-                        !(event.relatedTarget instanceof Node) ||
-                        !event.currentTarget.contains(event.relatedTarget)
-                      ) {
-                        window.setTimeout(() => setSearchOpen(false), 150);
+                  <label className="sr-only" htmlFor="workspace-search">Search modules</label>
+                  <GooeyInput
+                    autoComplete="off"
+                    id="workspace-search"
+                    onChange={(event) => setModuleSearch(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && searchResults[0]) {
+                        navigateToSection(searchResults[0].id);
+                        setModuleSearch("");
+                        setSearchOpen(false);
                       }
                     }}
-                  >
-                    <label className="sr-only" htmlFor="workspace-search">Search modules</label>
-                    <GooeyInput
-                      autoComplete="off"
-                      id="workspace-search"
-                      onChange={(event) => setModuleSearch(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" && searchResults[0]) {
-                          navigateToSection(searchResults[0].id);
-                          setModuleSearch("");
-                          setSearchOpen(false);
-                        }
-                      }}
-                      placeholder="Search..."
-                      ref={searchInputRef}
-                      role="combobox"
-                      aria-expanded={moduleSearch.trim().length > 0}
-                      aria-controls="workspace-search-results"
-                      value={moduleSearch}
-                    />
-                    {moduleSearch.trim() && (
-                      <div
-                        className="mt-2 max-h-72 overflow-y-auto border-t border-slate-100 pt-2 dark:border-slate-800"
-                        id="workspace-search-results"
-                        role="listbox"
-                      >
-                        {searchResults.length ? searchResults.map((section) => (
-                          <button
-                            className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-blue-300"
-                            key={section.id}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => {
-                              navigateToSection(section.id);
-                              setModuleSearch("");
-                              setSearchOpen(false);
-                            }}
-                            role="option"
-                            type="button"
-                          >
-                            <span className="text-blue-600">{section.icon}</span>
-                            <span>{section.label}</span>
-                          </button>
-                        )) : (
-                          <p className="px-3 py-4 text-center text-xs text-slate-500">No modules found.</p>
-                        )}
-                      </div>
-                    )}
-                    {!moduleSearch.trim() && (
-                      <p className="px-1 pt-2 text-[10px] text-slate-400">Press Enter to open the first result · Esc to close</p>
-                    )}
+                    placeholder="Search..."
+                    ref={searchInputRef}
+                    role="combobox"
+                    aria-expanded={moduleSearch.trim().length > 0}
+                    aria-controls="workspace-search-results"
+                    value={moduleSearch}
+                  />
+                  {moduleSearch.trim() && (
+                    <div
+                      className="absolute right-0 top-full z-50 mt-2 max-h-72 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
+                      id="workspace-search-results"
+                      role="listbox"
+                    >
+                      {searchResults.length ? searchResults.map((section) => (
+                        <button
+                          className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                          key={section.id}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            navigateToSection(section.id);
+                            setModuleSearch("");
+                            setSearchOpen(false);
+                          }}
+                          role="option"
+                          type="button"
+                        >
+                          <span className="text-blue-600">{section.icon}</span>
+                          <span>{section.label}</span>
+                        </button>
+                      )) : (
+                        <p className="px-3 py-4 text-center text-xs text-slate-500">No modules found.</p>
+                      )}
+                    </div>
+                  )}
                   </div>
-                </div>
               )}
             </div>
             <span className="hidden whitespace-nowrap rounded-full bg-amber-50 px-3 py-1.5 text-[10px] font-bold tracking-wide text-amber-800 dark:bg-amber-950 dark:text-amber-300 lg:inline-flex">
@@ -523,6 +520,15 @@ export default function Home() {
 
         <section className="flex h-dvh min-h-0 flex-1 flex-col bg-slate-50 dark:bg-slate-950 md:hidden">
           <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 pt-[env(safe-area-inset-top)] dark:border-slate-800 dark:bg-slate-950">
+            <button
+              aria-expanded={mobileOpen}
+              aria-label="Open navigation menu"
+              className="grid size-10 shrink-0 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              onClick={() => setMobileOpen(true)}
+              type="button"
+            >
+              <IconMenu2 aria-hidden="true" className="size-5" />
+            </button>
             {activeSection !== "overview" ? (
               <button
                 aria-label="Back to dashboard"
@@ -566,6 +572,44 @@ export default function Home() {
               )}
             </button>
           </header>
+
+          <AnimatePresence>
+            {mobileOpen && (
+              <motion.div
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-50 bg-slate-950/40 md:hidden"
+                exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }}
+                onClick={() => setMobileOpen(false)}
+                transition={{ duration: 0.15 }}
+              >
+                <motion.aside
+                  animate={{ x: 0 }}
+                  aria-label="Mobile navigation"
+                  aria-modal="true"
+                  className="flex h-full w-[min(20rem,85vw)] flex-col gap-5 overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950"
+                  exit={{ x: "-100%" }}
+                  initial={{ x: "-100%" }}
+                  onClick={(event) => event.stopPropagation()}
+                  role="dialog"
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="grid size-9 place-items-center rounded-lg bg-blue-700 text-xs font-bold text-white">G</span>
+                      <div><p className="text-sm font-bold tracking-[0.12em] text-slate-900 dark:text-white">GAP-IT</p><p className="text-[10px] text-slate-500">Quality workspace</p></div>
+                    </div>
+                    <button aria-label="Close navigation menu" className="grid size-10 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMobileOpen(false)} type="button"><IconX aria-hidden="true" className="size-5" /></button>
+                  </div>
+                  <SectionNavigation activeSection={activeSection} onNavigate={navigateToSection} onSelect={() => setMobileOpen(false)} />
+                  <div className="mt-auto flex items-center gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
+                    <span className="grid size-8 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">QT</span>
+                    <div><p className="text-xs font-semibold text-slate-800 dark:text-slate-100">Quality Team</p><p className="text-[10px] text-slate-500">Workspace member</p></div>
+                  </div>
+                </motion.aside>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-5">
             <WorkspaceModule
