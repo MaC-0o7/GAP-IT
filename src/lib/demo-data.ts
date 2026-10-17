@@ -65,6 +65,7 @@ export type QualityEvent = {
   rootCause?: string;
   correctiveActions?: string[];
   correctiveActionCompleted?: boolean[];
+  statusHistory?: { status: QualityEvent["status"]; timestamp: string }[];
 };
 
 export type DemoUser = {

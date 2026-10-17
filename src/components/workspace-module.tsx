@@ -912,6 +912,9 @@ export function WorkspaceModule({
         movingRanges.length
           ? movingRanges.reduce((sum, value) => sum + value, 0) / movingRanges.length
           : 0;
+      const movingRangeUcl = movingRangeMean * 3.267;
+      const movingRangeAxisMax = Math.max(...movingRanges, movingRangeUcl, 0.001);
+      const movingRangeY = (value: number) => 144 - (value / movingRangeAxisMax) * 120;
       const ucl = stats && values.length > 1 ? stats.mean + 2.66 * movingRangeMean : null;
       const lcl = stats && values.length > 1 ? stats.mean - 2.66 * movingRangeMean : null;
       const points = values.slice(-40);
@@ -950,11 +953,13 @@ export function WorkspaceModule({
           <section className={cardClass}><div className="mb-3"><h2 className="font-semibold text-slate-900 dark:text-white">Moving range chart</h2><p className="text-xs text-slate-500 dark:text-slate-400">Absolute difference between consecutive readings · MR̄={movingRangeMean.toFixed(4)} {part?.unit ?? ""}</p></div>
             {movingRanges.length ? <svg aria-label="Moving range chart of consecutive reading differences" className="h-40 w-full overflow-visible" preserveAspectRatio="none" role="img" viewBox="0 0 760 170">
              {[24, 64, 104, 144].map((yPosition) => <line key={yPosition} x1="42" x2="735" y1={yPosition} y2={yPosition} stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="3 5" />)}
-             <line x1="42" x2="735" y1={144 - (movingRangeMean / Math.max(...movingRanges, movingRangeMean, 0.001)) * 120} y2={144 - (movingRangeMean / Math.max(...movingRanges, movingRangeMean, 0.001)) * 120} stroke="#2563eb" strokeDasharray="4 4" />
-             {movingRanges.length > 1 && <polyline fill="none" stroke="#8b5cf6" strokeWidth="2" points={movingRanges.slice(-40).map((value, index, shown) => `${42 + index / Math.max(shown.length - 1, 1) * 693},${144 - value / Math.max(...movingRanges, 0.001) * 120}`).join(" ")} />}
-             {movingRanges.slice(-40).map((value, index, shown) => <circle aria-label={`Moving range ${index + 1}: ${value.toFixed(4)}`} key={index} cx={42 + index / Math.max(shown.length - 1, 1) * 693} cy={144 - value / Math.max(...movingRanges, 0.001) * 120} r="3" fill={value > 3.267 * movingRangeMean ? "#e11d48" : "#8b5cf6"} />)}
-             <text x="4" y={144 - (movingRangeMean / Math.max(...movingRanges, movingRangeMean, 0.001)) * 120 - 4} fill="#2563eb" fontSize="10">MR̄</text>
+             <line x1="42" x2="735" y1={movingRangeY(movingRangeUcl)} y2={movingRangeY(movingRangeUcl)} stroke="#8b5cf6" strokeDasharray="3 4" />
+             <line x1="42" x2="735" y1={movingRangeY(movingRangeMean)} y2={movingRangeY(movingRangeMean)} stroke="#2563eb" strokeDasharray="4 4" />
+             {movingRanges.length > 1 && <polyline fill="none" stroke="#8b5cf6" strokeWidth="2" points={movingRanges.slice(-40).map((value, index, shown) => `${42 + index / Math.max(shown.length - 1, 1) * 693},${movingRangeY(value)}`).join(" ")} />}
+             {movingRanges.slice(-40).map((value, index, shown) => <circle aria-label={`Moving range ${index + 1}: ${value.toFixed(4)}`} key={index} cx={42 + index / Math.max(shown.length - 1, 1) * 693} cy={movingRangeY(value)} r="3" fill={value > movingRangeUcl ? "#e11d48" : "#8b5cf6"} />)}
+             <text x="4" y={movingRangeY(movingRangeUcl) - 4} fill="#8b5cf6" fontSize="10">UCL</text><text x="4" y={movingRangeY(movingRangeMean) - 4} fill="#2563eb" fontSize="10">MR̄</text><text x="4" y={movingRangeY(0) - 4} fill="#64748b" fontSize="10">LCL</text>
             </svg> : <EmptyState message="At least two valid readings are needed to calculate moving ranges." />}
+            {movingRanges.length > 0 && <div className="mt-2 flex flex-wrap gap-4 text-[10px] text-slate-500"><span><i className="mr-1 inline-block w-4 border-t border-dashed border-violet-500" />UCL = 3.267 × MR̄</span><span><i className="mr-1 inline-block w-4 border-t border-dashed border-blue-600" />MR̄</span><span>LCL = 0</span></div>}
           </section>
           <section className={cardClass}><div className="mb-4"><h2 className="font-semibold text-slate-900 dark:text-white">Measurement distribution</h2><p className="text-xs text-slate-500 dark:text-slate-400">Histogram of {values.length} valid {part?.number ?? "part"} readings · fixed-width bins</p></div><div className="flex h-32 items-end gap-2">{histogram.map((count, index) => <div key={index} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><span className="text-[10px] text-slate-500">{count || ""}</span><div className="w-full rounded-t bg-violet-500/80" style={{ height: `${Math.max((count / histogramMax) * 82, 2)}%` }} /></div>)}</div><div className="mt-2 flex justify-between text-[10px] text-slate-400"><span>{minAxis.toFixed(2)} {part?.unit ?? ""}</span><span>{maxAxis.toFixed(2)} {part?.unit ?? ""}</span></div></section>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -997,12 +1002,13 @@ export function WorkspaceModule({
               setNotice("Enter a description before creating the quality event.");
               return;
             }
+            const timestamp = new Date().toISOString();
             const qualityEvent: QualityEvent = {
               id: `QE-${Date.now()}`,
               type: "Quality event",
               severity: eventDraft.severity,
               description,
-              timestamp: new Date().toISOString(),
+              timestamp,
               source: eventDraft.source || "Manual entry",
               measurementId: "",
               status: "Open",
@@ -1010,6 +1016,7 @@ export function WorkspaceModule({
               notes: "",
               rootCause: "",
               correctiveActions: [],
+              statusHistory: [{ status: "Open", timestamp }],
             };
             setData((current) => ({ ...current, events: [qualityEvent, ...current.events] }));
             setEventDraft({ description: "", severity: "Medium", source: "" });
@@ -1044,10 +1051,21 @@ export function WorkspaceModule({
                       {["Acknowledged", "Investigating", "Resolved"].map((status) => (
                         <button key={status} disabled={item.status === "Resolved"} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200" onClick={() => {
                           if (status === "Resolved" && !window.confirm(`Resolve ${item.id}? Confirm investigation and corrective actions are complete.`)) return;
-                          setData((current) => ({ ...current, events: current.events.map((event) => event.id === item.id ? { ...event, status: status as typeof event.status, assignedTo: event.assignedTo === "Unassigned" ? "A. Patel" : event.assignedTo } : event) }));
+                          setData((current) => ({ ...current, events: current.events.map((event) => event.id === item.id ? { ...event, status: status as typeof event.status, assignedTo: event.assignedTo === "Unassigned" ? "A. Patel" : event.assignedTo, statusHistory: [...(event.statusHistory ?? [{ status: event.status, timestamp: event.timestamp }]), { status: status as typeof event.status, timestamp: new Date().toISOString() }] } : event) }));
                         }} type="button">{status}</button>
                       ))}
                     </div>
+                  </div>
+                  <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Event timeline</p>
+                    <ol aria-label={`Status timeline for ${item.id}`} className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                      {(item.statusHistory ?? [{ status: item.status, timestamp: item.timestamp }]).map((step, index) => (
+                        <li className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300" key={`${step.status}-${step.timestamp}-${index}`}>
+                          <span className={`size-2 rounded-full ${step.status === "Resolved" ? "bg-emerald-500" : step.status === "Open" ? "bg-blue-500" : "bg-violet-500"}`} />
+                          <span className="font-semibold">{step.status}</span><time className="text-slate-400" dateTime={step.timestamp}>{formatTimestamp(step.timestamp)}</time>
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-[220px_1fr]">
                     <label className="text-xs font-medium text-slate-500">Assigned user
