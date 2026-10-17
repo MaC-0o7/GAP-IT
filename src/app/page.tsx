@@ -24,7 +24,7 @@ import {
 } from "@tabler/icons-react";
 import { createDemoData, type DemoData } from "@/lib/demo-data";
 import { WorkspaceModule } from "@/components/workspace-module";
-import { GooeyInput } from "@/components/ui/gooey-input";
+import { SearchInput } from "@/components/ui/primitives";
 import {
   Sidebar,
   SidebarBody,
@@ -418,7 +418,8 @@ export default function Home() {
                   className="relative w-[min(18rem,35vw)]"
                 >
                   <label className="sr-only" htmlFor="workspace-search">Search modules</label>
-                  <GooeyInput
+                  <SearchInput
+                    aria-label="Search workspace modules"
                     autoComplete="off"
                     id="workspace-search"
                     onChange={(event) => setModuleSearch(event.target.value)}

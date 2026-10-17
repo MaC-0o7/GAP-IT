@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ComponentProps, type ReactNode } from "react";
+import { Button } from "@/components/ui/primitives";
 
 type StatefulButtonProps = Omit<ComponentProps<"button">, "children" | "onClick"> & {
   children: ReactNode;
@@ -33,12 +34,13 @@ export function StatefulButton({
   };
 
   return (
-    <button
+    <Button
       {...props}
       aria-busy={state === "loading"}
       disabled={disabled || state === "loading"}
       onClick={() => void handleClick()}
       type={type}
+      variant="primary"
     >
       {state === "loading"
         ? "Sending…"
@@ -47,6 +49,6 @@ export function StatefulButton({
           : state === "error"
             ? "Failed — retry"
             : children}
-    </button>
+    </Button>
   );
 }
