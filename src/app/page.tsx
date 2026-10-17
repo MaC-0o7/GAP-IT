@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   IconActivity,
   IconBell,
@@ -116,12 +116,12 @@ function WorkspaceMember() {
       className="flex min-h-10 items-center gap-3 px-2.5"
       title="Quality Team · Workspace member"
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-900 dark:bg-emerald-400/15 dark:text-emerald-200">
         QT
       </span>
       {open && (
         <div className="min-w-0 whitespace-nowrap">
-          <p className="truncate text-xs font-semibold text-slate-800">
+          <p className="truncate text-xs font-semibold text-slate-800 dark:text-emerald-50">
             Quality Team
           </p>
           <p className="truncate text-[11px] text-slate-500">
