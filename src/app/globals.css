@@ -161,6 +161,97 @@ body {
   box-shadow: 0 0 16px rgb(16 185 129 / 0.12);
 }
 
+.dark [class~="dark:bg-slate-950"] {
+  background-color: var(--emerald-bg);
+}
+
+.dark [class~="dark:bg-slate-900"] {
+  background-color: var(--emerald-card);
+}
+
+.dark [class~="dark:bg-slate-800"] {
+  background-color: var(--emerald-panel);
+}
+
+.dark [class~="dark:border-slate-800"],
+.dark [class~="dark:border-slate-700"] {
+  border-color: rgb(167 243 208 / 0.12);
+}
+
+.dark [class~="dark:text-slate-50"],
+.dark [class~="dark:text-slate-100"],
+.dark [class~="dark:text-slate-200"] {
+  color: var(--emerald-text);
+}
+
+.dark [class~="dark:text-slate-300"] {
+  color: rgb(236 253 245 / 0.82);
+}
+
+.dark [class~="dark:text-slate-400"] {
+  color: var(--emerald-muted);
+}
+
+.dark [class~="dark:text-blue-300"],
+.dark [class~="dark:text-blue-400"],
+.dark [class~="dark:text-blue-500"],
+.dark [class~="dark:text-blue-600"] {
+  color: var(--emerald-highlight);
+}
+
+.dark [class~="dark:bg-blue-950"] {
+  background-color: rgb(16 185 129 / 0.12);
+}
+
+.dark [class~="bg-blue-50"],
+.dark [class~="bg-blue-100"] {
+  background-color: rgb(16 185 129 / 0.1);
+}
+
+.dark [class~="border-blue-200"],
+.dark [class~="dark:border-blue-900"] {
+  border-color: rgb(52 211 153 / 0.28);
+}
+
+.dark [class~="text-blue-600"],
+.dark [class~="text-blue-700"],
+.dark [class~="text-blue-800"] {
+  color: var(--emerald-highlight);
+}
+
+.dark svg [stroke="#2563eb"] {
+  stroke: var(--emerald-highlight);
+}
+
+.dark svg [fill="#2563eb"] {
+  fill: var(--emerald-highlight);
+}
+
+.dark svg [fill="#dbeafe"] {
+  fill: rgb(16 185 129 / 0.18);
+}
+
+.dark [class~="bg-blue-700"],
+.dark [class~="bg-blue-600"] {
+  border-color: transparent;
+  background-color: var(--emerald-primary);
+  background-image: linear-gradient(135deg, #059669, #10b981, #34d399);
+  color: #052e24;
+}
+
+.dark [class~="hover:bg-blue-800"]:hover,
+.dark [class~="hover:bg-blue-700"]:hover {
+  background-color: var(--emerald-highlight);
+  background-image: linear-gradient(135deg, #10b981, #34d399);
+  color: #052e24;
+  box-shadow: 0 0 22px rgb(16 185 129 / 0.28);
+}
+
+.dark [class~="hover:bg-slate-800"]:hover,
+.dark [class~="hover:bg-slate-700"]:hover {
+  background-color: rgb(167 243 208 / 0.08);
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;

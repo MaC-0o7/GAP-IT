@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { motion } from "motion/react";
 import {
   IconActivity,
   IconAlertTriangle,
@@ -113,7 +114,12 @@ function Metric({
   icon: React.ReactNode;
 }) {
   return (
-    <div className={cardClass}>
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className={cardClass}
+      initial={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.24, ease: "easeOut" }}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
@@ -126,7 +132,7 @@ function Metric({
           {icon}
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -532,7 +538,13 @@ export function WorkspaceModule({
   const traceRecords = traceSearched ? matchingTrace : [];
 
   const shell = (title: string, description: string, content: React.ReactNode) => (
-    <div className="mx-auto w-full max-w-7xl">
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-auto w-full max-w-7xl"
+      initial={{ opacity: 0, y: 6 }}
+      key={activeSection}
+      transition={{ duration: 0.22, ease: "easeOut" }}
+    >
       <PageIntro title={title} description={description} />
       {notice && (
         <div role="status" className="mb-4 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
@@ -543,7 +555,7 @@ export function WorkspaceModule({
         </div>
       )}
       {content}
-    </div>
+    </motion.div>
   );
 
   switch (activeSection) {
