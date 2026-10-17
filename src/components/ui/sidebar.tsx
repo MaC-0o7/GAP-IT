@@ -109,7 +109,7 @@ function DesktopSidebar({
     <motion.aside
       aria-label="Main navigation"
       className={cn(
-        "hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white/90 px-3 py-5 backdrop-blur-xl dark:border-emerald-100/10 dark:bg-[#101a19]/85 dark:shadow-[8px_0_32px_rgba(0,0,0,0.16)]",
+        "glass-header hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-slate-300/70 bg-white/75 px-3 py-5 shadow-[8px_0_32px_rgba(51,78,104,0.06)] backdrop-blur-2xl dark:border-blue-100/10 dark:bg-[#142338]/85 dark:shadow-[8px_0_32px_rgba(0,0,0,0.2)]",
         className,
       )}
       animate={{ width: animate ? (open ? 272 : 76) : 272 }}
@@ -185,10 +185,10 @@ export function SidebarLink({
       aria-current={link.active ? "page" : undefined}
       aria-label={!open ? link.label : undefined}
       className={cn(
-        "group/sidebar relative flex min-h-10 items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
+        "group/sidebar relative flex min-h-10 items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors duration-200",
         link.active
-          ? "bg-emerald-50 font-semibold text-emerald-900 before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-full before:bg-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-200 dark:before:bg-emerald-400"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-emerald-100/70 dark:hover:bg-emerald-100/[0.06] dark:hover:text-emerald-50",
+          ? "bg-[#334e68] font-semibold text-white shadow-sm before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-full before:bg-[#38bdf8] dark:bg-blue-500/20 dark:text-blue-50 dark:before:bg-sky-400"
+          : "text-slate-600 hover:bg-blue-50 hover:text-[#172b4d] dark:text-blue-100/70 dark:hover:bg-blue-100/[0.08] dark:hover:text-blue-50",
         className,
       )}
       href={link.href}
