@@ -91,7 +91,7 @@ export type DemoData = {
   settings: WorkspaceSettings;
 };
 
-const now = Date.now();
+const now = Date.UTC(2026, 9, 17, 9, 45);
 const isoMinutesAgo = (minutes: number) =>
   new Date(now - minutes * 60_000).toISOString();
 
